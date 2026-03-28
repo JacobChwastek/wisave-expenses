@@ -15,6 +15,7 @@ public class ExpenseTests
 
         Assert.Equal("exp-1", expense.Id);
         Assert.Equal(285.50m, expense.Amount);
+        Assert.Equal(Currency.PLN, expense.Currency);
         Assert.False(expense.IsDeleted);
         Assert.Single(expense.GetUncommittedEvents());
         Assert.IsType<ExpenseRecorded>(expense.GetUncommittedEvents()[0]);
@@ -29,11 +30,36 @@ public class ExpenseTests
     }
 
     [Fact]
-    public void Record_rejects_negative_amount()
+    public void Record_rejects_empty_description()
     {
         Assert.Throws<DomainException>(() =>
             Expense.Record("exp-1", "user-1", "acc-1", "cat-1", null,
-                -10m, Currency.PLN, new DateOnly(2026, 3, 25), "Bad"));
+                100m, Currency.PLN, new DateOnly(2026, 3, 25), ""));
+    }
+
+    [Fact]
+    public void ChangeAmount_updates_value()
+    {
+        var expense = Expense.Record("exp-1", "user-1", "acc-1", "cat-1", null,
+            100m, Currency.PLN, new DateOnly(2026, 3, 25), "Coffee");
+        expense.ClearUncommittedEvents();
+
+        expense.ChangeAmount(150m, Currency.PLN);
+
+        Assert.Equal(150m, expense.Amount);
+    }
+
+    [Fact]
+    public void Recategorize_changes_category()
+    {
+        var expense = Expense.Record("exp-1", "user-1", "acc-1", "cat-1", null,
+            100m, Currency.PLN, new DateOnly(2026, 3, 25), "Coffee");
+        expense.ClearUncommittedEvents();
+
+        expense.Recategorize("cat-2", "sub-1");
+
+        Assert.Equal("cat-2", expense.CategoryId);
+        Assert.Equal("sub-1", expense.SubcategoryId);
     }
 
     [Fact]

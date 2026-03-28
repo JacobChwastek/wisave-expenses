@@ -33,7 +33,7 @@ public sealed class CopyBudgetFromPreviousHandler(
                 budgetId, command.UserId, command.Month, command.Year,
                 sourceMonth, sourceYear,
                 sourceBudget.Currency, sourceBudget.TotalLimit,
-                sourceBudget.Recurring, sourceBudget.CategoryLimits);
+                sourceBudget.Recurring, sourceBudget.CategoryBudgets.ToDictionary(cb => cb.CategoryId, cb => cb.Limit));
 
             await uniquenessChecker.ReserveAsync(budgetId, command.UserId, command.Month, command.Year, ct);
             await repository.SaveAsync(newBudget, ct);

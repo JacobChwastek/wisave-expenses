@@ -19,6 +19,10 @@ public sealed record BudgetCopiedFromPrevious(
     int Year,
     int SourceMonth,
     int SourceYear,
+    decimal TotalLimit,
+    Currency Currency,
+    bool Recurring,
+    Dictionary<string, decimal> CategoryLimits,
     DateTimeOffset Timestamp);
 
 public sealed record OverallLimitSet(

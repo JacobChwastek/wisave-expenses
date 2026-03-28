@@ -1,7 +1,6 @@
 using WiSave.Expenses.Contracts.Events;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Domain.SharedKernel;
-
 namespace WiSave.Expenses.Core.Domain.Accounting;
 
 public sealed class Expense : AggregateRoot
@@ -27,6 +26,8 @@ public sealed class Expense : AggregateRoot
     {
         if (amount <= 0)
             throw new DomainException("Expense amount must be positive.");
+        if (string.IsNullOrWhiteSpace(description))
+            throw new DomainException("Expense description is required.");
 
         var expense = new Expense();
         expense.RaiseEvent(new ExpenseRecorded(
@@ -36,13 +37,31 @@ public sealed class Expense : AggregateRoot
         return expense;
     }
 
+    public void ChangeAmount(decimal amount, Currency currency)
+    {
+        EnsureNotDeleted();
+        if (amount <= 0)
+            throw new DomainException("Expense amount must be positive.");
+
+        RaiseEvent(new ExpenseUpdated(
+            Id, UserId, amount, currency, null, null, null, null, null, null,
+            DateTimeOffset.UtcNow));
+    }
+
+    public void Recategorize(string categoryId, string? subcategoryId = null)
+    {
+        EnsureNotDeleted();
+        RaiseEvent(new ExpenseUpdated(
+            Id, UserId, null, null, null, null, categoryId, subcategoryId, null, null,
+            DateTimeOffset.UtcNow));
+    }
+
     public void Update(
         decimal? amount = null, Currency? currency = null, DateOnly? date = null,
         string? description = null, string? categoryId = null, string? subcategoryId = null,
         bool? recurring = null, Dictionary<string, string>? metadata = null)
     {
         EnsureNotDeleted();
-
         if (amount.HasValue && amount.Value <= 0)
             throw new DomainException("Expense amount must be positive.");
 

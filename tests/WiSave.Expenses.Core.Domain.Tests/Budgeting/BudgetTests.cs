@@ -13,11 +13,12 @@ public class BudgetTests
         var budget = Budget.Create("bud-1", "user-1", 3, 2026, 8000m, Currency.PLN);
 
         Assert.Equal("bud-1", budget.Id);
-        Assert.Equal(3, budget.Month);
-        Assert.Equal(2026, budget.Year);
+        Assert.Equal(3, budget.Period.Month);
+        Assert.Equal(2026, budget.Period.Year);
         Assert.Equal(8000m, budget.TotalLimit);
+        Assert.Equal(Currency.PLN, budget.Currency);
         Assert.True(budget.Recurring);
-        Assert.Empty(budget.CategoryLimits);
+        Assert.Empty(budget.CategoryBudgets);
         Assert.Single(budget.GetUncommittedEvents());
         Assert.IsType<BudgetCreated>(budget.GetUncommittedEvents()[0]);
     }
@@ -59,8 +60,9 @@ public class BudgetTests
         var budget = Budget.Create("bud-1", "user-1", 3, 2026, 8000m, Currency.PLN);
         budget.SetCategoryLimit("cat-1", 2000m);
 
-        Assert.Single(budget.CategoryLimits);
-        Assert.Equal(2000m, budget.CategoryLimits["cat-1"]);
+        Assert.Single(budget.CategoryBudgets);
+        Assert.Equal("cat-1", budget.CategoryBudgets[0].CategoryId);
+        Assert.Equal(2000m, budget.CategoryBudgets[0].Limit);
     }
 
     [Fact]
@@ -70,7 +72,8 @@ public class BudgetTests
         budget.SetCategoryLimit("cat-1", 2000m);
         budget.SetCategoryLimit("cat-1", 3000m);
 
-        Assert.Equal(3000m, budget.CategoryLimits["cat-1"]);
+        Assert.Single(budget.CategoryBudgets);
+        Assert.Equal(3000m, budget.CategoryBudgets[0].Limit);
     }
 
     [Fact]
@@ -88,7 +91,7 @@ public class BudgetTests
         budget.SetCategoryLimit("cat-1", 2000m);
         budget.RemoveCategoryLimit("cat-1");
 
-        Assert.Empty(budget.CategoryLimits);
+        Assert.Empty(budget.CategoryBudgets);
     }
 
     [Fact]
@@ -112,8 +115,29 @@ public class BudgetTests
             "bud-2", "user-1", 4, 2026, 3, 2026, Currency.PLN, 8000m, true, sourceLimits);
 
         Assert.Equal("bud-2", budget.Id);
-        Assert.Equal(4, budget.Month);
-        Assert.Equal(2, budget.CategoryLimits.Count);
-        Assert.Equal(3000m, budget.CategoryLimits["cat-1"]);
+        Assert.Equal(4, budget.Period.Month);
+        Assert.Equal(8000m, budget.TotalLimit);
+        Assert.Equal(2, budget.CategoryBudgets.Count);
+        Assert.Equal(3000m, budget.CategoryBudgets.First(cb => cb.CategoryId == "cat-1").Limit);
+    }
+
+    [Fact]
+    public void CopyFromPrevious_replays_correctly()
+    {
+        var sourceLimits = new Dictionary<string, decimal> { ["cat-1"] = 3000m };
+        var original = Budget.CopyFromPrevious(
+            "bud-2", "user-1", 4, 2026, 3, 2026, Currency.PLN, 8000m, true, sourceLimits);
+        var events = original.GetUncommittedEvents();
+
+        var replayed = new Budget();
+        replayed.ReplayEvents(events);
+
+        Assert.Equal("bud-2", replayed.Id);
+        Assert.Equal(4, replayed.Period.Month);
+        Assert.Equal(8000m, replayed.TotalLimit);
+        Assert.Equal(Currency.PLN, replayed.Currency);
+        Assert.True(replayed.Recurring);
+        Assert.Single(replayed.CategoryBudgets);
+        Assert.Equal(3000m, replayed.CategoryBudgets[0].Limit);
     }
 }

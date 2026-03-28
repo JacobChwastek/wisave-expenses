@@ -1,30 +1,29 @@
 using WiSave.Expenses.Contracts.Events;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Domain.SharedKernel;
+using WiSave.Expenses.Core.Domain.SharedKernel.ValueObjects;
 
 namespace WiSave.Expenses.Core.Domain.Budgeting;
 
 public sealed class Budget : AggregateRoot
 {
     public string UserId { get; private set; } = string.Empty;
-    public int Month { get; private set; }
-    public int Year { get; private set; }
+    public BudgetPeriod Period { get; private set; } = null!;
     public decimal TotalLimit { get; private set; }
     public Currency Currency { get; private set; }
     public bool Recurring { get; private set; } = true;
 
-    private readonly Dictionary<string, decimal> _categoryLimits = [];
-    public IReadOnlyDictionary<string, decimal> CategoryLimits => _categoryLimits;
+    private readonly List<CategoryBudget> _categoryBudgets = [];
+    public IReadOnlyList<CategoryBudget> CategoryBudgets => _categoryBudgets.AsReadOnly();
 
     public Budget() { }
 
     public static Budget Create(
         string id, string userId, int month, int year, decimal totalLimit, Currency currency, bool recurring = true)
     {
+        _ = new BudgetPeriod(month, year);
         if (totalLimit < 0)
             throw new DomainException("Total limit must be >= 0.");
-        if (month is < 1 or > 12)
-            throw new DomainException("Month must be between 1 and 12.");
 
         var budget = new Budget();
         budget.RaiseEvent(new BudgetCreated(id, userId, month, year, totalLimit, currency, recurring, DateTimeOffset.UtcNow));
@@ -35,17 +34,15 @@ public sealed class Budget : AggregateRoot
         string id, string userId, int month, int year, int sourceMonth, int sourceYear,
         Currency currency, decimal totalLimit, bool recurring, IReadOnlyDictionary<string, decimal> categoryLimits)
     {
+        var period = new BudgetPeriod(month, year);
+        _ = new BudgetPeriod(sourceMonth, sourceYear);
+
         var budget = new Budget();
         budget.RaiseEvent(new BudgetCopiedFromPrevious(
-            id, userId, month, year, sourceMonth, sourceYear, DateTimeOffset.UtcNow));
-
-        // Apply source state that the event doesn't carry
-        budget.Currency = currency;
-        budget.TotalLimit = totalLimit;
-        budget.Recurring = recurring;
-        foreach (var (catId, limit) in categoryLimits)
-            budget._categoryLimits[catId] = limit;
-
+            id, userId, month, year, sourceMonth, sourceYear,
+            totalLimit, currency, recurring,
+            new Dictionary<string, decimal>(categoryLimits),
+            DateTimeOffset.UtcNow));
         return budget;
     }
 
@@ -59,15 +56,13 @@ public sealed class Budget : AggregateRoot
 
     public void SetCategoryLimit(string categoryId, decimal limit)
     {
-        if (limit < 0)
-            throw new DomainException("Category limit must be >= 0.");
-
+        _ = new CategoryBudget(categoryId, limit);
         RaiseEvent(new CategoryLimitSet(Id, UserId, categoryId, limit, DateTimeOffset.UtcNow));
     }
 
     public void RemoveCategoryLimit(string categoryId)
     {
-        if (!_categoryLimits.ContainsKey(categoryId))
+        if (_categoryBudgets.All(cb => cb.CategoryId != categoryId))
             throw new DomainException($"Category '{categoryId}' does not have a budget.");
 
         RaiseEvent(new CategoryLimitRemoved(Id, UserId, categoryId, DateTimeOffset.UtcNow));
@@ -80,8 +75,7 @@ public sealed class Budget : AggregateRoot
             case BudgetCreated e:
                 Id = e.BudgetId;
                 UserId = e.UserId;
-                Month = e.Month;
-                Year = e.Year;
+                Period = new BudgetPeriod(e.Month, e.Year);
                 TotalLimit = e.TotalLimit;
                 Currency = e.Currency;
                 Recurring = e.Recurring;
@@ -90,8 +84,13 @@ public sealed class Budget : AggregateRoot
             case BudgetCopiedFromPrevious e:
                 Id = e.BudgetId;
                 UserId = e.UserId;
-                Month = e.Month;
-                Year = e.Year;
+                Period = new BudgetPeriod(e.Month, e.Year);
+                TotalLimit = e.TotalLimit;
+                Currency = e.Currency;
+                Recurring = e.Recurring;
+                _categoryBudgets.Clear();
+                foreach (var (catId, limit) in e.CategoryLimits)
+                    _categoryBudgets.Add(new CategoryBudget(catId, limit));
                 break;
 
             case OverallLimitSet e:
@@ -99,11 +98,16 @@ public sealed class Budget : AggregateRoot
                 break;
 
             case CategoryLimitSet e:
-                _categoryLimits[e.CategoryId] = e.Limit;
+                var existing = _categoryBudgets.FindIndex(cb => cb.CategoryId == e.CategoryId);
+                var newCb = new CategoryBudget(e.CategoryId, e.Limit);
+                if (existing >= 0)
+                    _categoryBudgets[existing] = newCb;
+                else
+                    _categoryBudgets.Add(newCb);
                 break;
 
             case CategoryLimitRemoved e:
-                _categoryLimits.Remove(e.CategoryId);
+                _categoryBudgets.RemoveAll(cb => cb.CategoryId == e.CategoryId);
                 break;
         }
     }
