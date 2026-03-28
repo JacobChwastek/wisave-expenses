@@ -1,0 +1,29 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.vs/
+.idea/
+
+## Build artifacts
+publish/
+artifacts/
+TestResults/
+
+## NuGet
+*.nupkg
+*.snupkg
+
+## Local environment
+.env
+appsettings.Local.json
+
+## IDE
+.vscode/
+.rider/
+
+## OS
+.DS_Store
+Thumbs.db

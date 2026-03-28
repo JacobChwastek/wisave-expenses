@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-WiSave.Expenses.Worker.Domain-4bbf5ea4-c3a4-4b69-a73d-7deaf56bba3d</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\WiSave.Expenses.Core.Application\WiSave.Expenses.Core.Application.csproj" />
+    <ProjectReference Include="..\WiSave.Expenses.Core.Domain\WiSave.Expenses.Core.Domain.csproj" />
+    <ProjectReference Include="..\WiSave.Expenses.Core.Infrastructure\WiSave.Expenses.Core.Infrastructure.csproj" />
+    <ProjectReference Include="..\WiSave.Expenses.Subscriptions\WiSave.Expenses.Subscriptions.csproj" />
+    <ProjectReference Include="..\WiSave.Expenses.Contracts\WiSave.Expenses.Contracts.csproj" />
+  </ItemGroup>
+</Project>
