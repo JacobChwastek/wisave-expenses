@@ -1,4 +1,5 @@
 using WiSave.Expenses.Contracts.Commands;
+using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Budgeting;
 using WiSave.Expenses.Core.Domain.SharedKernel;
@@ -18,7 +19,7 @@ public sealed class CreateBudgetHandler(
 
             var budgetId = Guid.NewGuid().ToString();
             var budget = Budget.Create(
-                budgetId, command.UserId, command.Month, command.Year,
+                new BudgetId(budgetId), new UserId(command.UserId), command.Month, command.Year,
                 command.TotalLimit, command.Currency, command.Recurring);
 
             await uniquenessChecker.ReserveAsync(budgetId, command.UserId, command.Month, command.Year, ct);

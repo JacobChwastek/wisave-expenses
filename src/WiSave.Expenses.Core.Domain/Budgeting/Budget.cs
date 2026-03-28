@@ -7,7 +7,7 @@ namespace WiSave.Expenses.Core.Domain.Budgeting;
 
 public sealed class Budget : AggregateRoot
 {
-    public string UserId { get; private set; } = string.Empty;
+    public UserId UserId { get; private set; } = null!;
     public BudgetPeriod Period { get; private set; } = null!;
     public decimal TotalLimit { get; private set; }
     public Currency Currency { get; private set; }
@@ -19,27 +19,27 @@ public sealed class Budget : AggregateRoot
     public Budget() { }
 
     public static Budget Create(
-        string id, string userId, int month, int year, decimal totalLimit, Currency currency, bool recurring = true)
+        BudgetId id, UserId userId, int month, int year, decimal totalLimit, Currency currency, bool recurring = true)
     {
         _ = new BudgetPeriod(month, year);
         if (totalLimit < 0)
             throw new DomainException("Total limit must be >= 0.");
 
         var budget = new Budget();
-        budget.RaiseEvent(new BudgetCreated(id, userId, month, year, totalLimit, currency, recurring, DateTimeOffset.UtcNow));
+        budget.RaiseEvent(new BudgetCreated(id.Value, userId.Value, month, year, totalLimit, currency, recurring, DateTimeOffset.UtcNow));
         return budget;
     }
 
     public static Budget CopyFromPrevious(
-        string id, string userId, int month, int year, int sourceMonth, int sourceYear,
+        BudgetId id, UserId userId, int month, int year, int sourceMonth, int sourceYear,
         Currency currency, decimal totalLimit, bool recurring, IReadOnlyDictionary<string, decimal> categoryLimits)
     {
-        var period = new BudgetPeriod(month, year);
+        _ = new BudgetPeriod(month, year);
         _ = new BudgetPeriod(sourceMonth, sourceYear);
 
         var budget = new Budget();
         budget.RaiseEvent(new BudgetCopiedFromPrevious(
-            id, userId, month, year, sourceMonth, sourceYear,
+            id.Value, userId.Value, month, year, sourceMonth, sourceYear,
             totalLimit, currency, recurring,
             new Dictionary<string, decimal>(categoryLimits),
             DateTimeOffset.UtcNow));
@@ -51,21 +51,21 @@ public sealed class Budget : AggregateRoot
         if (totalLimit < 0)
             throw new DomainException("Total limit must be >= 0.");
 
-        RaiseEvent(new OverallLimitSet(Id, UserId, totalLimit, DateTimeOffset.UtcNow));
+        RaiseEvent(new OverallLimitSet(Id, UserId.Value, totalLimit, DateTimeOffset.UtcNow));
     }
 
-    public void SetCategoryLimit(string categoryId, decimal limit)
+    public void SetCategoryLimit(CategoryId categoryId, decimal limit)
     {
-        _ = new CategoryBudget(categoryId, limit);
-        RaiseEvent(new CategoryLimitSet(Id, UserId, categoryId, limit, DateTimeOffset.UtcNow));
+        _ = new CategoryBudget(categoryId.Value, limit);
+        RaiseEvent(new CategoryLimitSet(Id, UserId.Value, categoryId.Value, limit, DateTimeOffset.UtcNow));
     }
 
-    public void RemoveCategoryLimit(string categoryId)
+    public void RemoveCategoryLimit(CategoryId categoryId)
     {
-        if (_categoryBudgets.All(cb => cb.CategoryId != categoryId))
-            throw new DomainException($"Category '{categoryId}' does not have a budget.");
+        if (_categoryBudgets.All(cb => cb.CategoryId != categoryId.Value))
+            throw new DomainException($"Category '{categoryId.Value}' does not have a budget.");
 
-        RaiseEvent(new CategoryLimitRemoved(Id, UserId, categoryId, DateTimeOffset.UtcNow));
+        RaiseEvent(new CategoryLimitRemoved(Id, UserId.Value, categoryId.Value, DateTimeOffset.UtcNow));
     }
 
     #region Apply
@@ -73,7 +73,7 @@ public sealed class Budget : AggregateRoot
     public void Apply(BudgetCreated e)
     {
         Id = e.BudgetId;
-        UserId = e.UserId;
+        UserId = new UserId(e.UserId);
         Period = new BudgetPeriod(e.Month, e.Year);
         TotalLimit = e.TotalLimit;
         Currency = e.Currency;
@@ -83,7 +83,7 @@ public sealed class Budget : AggregateRoot
     public void Apply(BudgetCopiedFromPrevious e)
     {
         Id = e.BudgetId;
-        UserId = e.UserId;
+        UserId = new UserId(e.UserId);
         Period = new BudgetPeriod(e.Month, e.Year);
         TotalLimit = e.TotalLimit;
         Currency = e.Currency;

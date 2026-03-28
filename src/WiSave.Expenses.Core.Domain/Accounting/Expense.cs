@@ -1,14 +1,15 @@
 using WiSave.Expenses.Contracts.Events;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Domain.SharedKernel;
+
 namespace WiSave.Expenses.Core.Domain.Accounting;
 
 public sealed class Expense : AggregateRoot
 {
-    public string UserId { get; private set; } = string.Empty;
-    public string AccountId { get; private set; } = string.Empty;
-    public string CategoryId { get; private set; } = string.Empty;
-    public string? SubcategoryId { get; private set; }
+    public UserId UserId { get; private set; } = null!;
+    public AccountId AccountId { get; private set; } = null!;
+    public CategoryId CategoryId { get; private set; } = null!;
+    public SubcategoryId? SubcategoryId { get; private set; }
     public decimal Amount { get; private set; }
     public Currency Currency { get; private set; }
     public DateOnly Date { get; private set; }
@@ -20,7 +21,7 @@ public sealed class Expense : AggregateRoot
     public Expense() { }
 
     public static Expense Record(
-        string id, string userId, string accountId, string categoryId, string? subcategoryId,
+        ExpenseId id, UserId userId, AccountId accountId, CategoryId categoryId, SubcategoryId? subcategoryId,
         decimal amount, Currency currency, DateOnly date, string description,
         bool recurring = false, Dictionary<string, string>? metadata = null)
     {
@@ -31,7 +32,7 @@ public sealed class Expense : AggregateRoot
 
         var expense = new Expense();
         expense.RaiseEvent(new ExpenseRecorded(
-            id, userId, accountId, categoryId, subcategoryId,
+            id.Value, userId.Value, accountId.Value, categoryId.Value, subcategoryId?.Value,
             amount, currency, date, description, recurring, metadata,
             DateTimeOffset.UtcNow));
         return expense;
@@ -44,21 +45,21 @@ public sealed class Expense : AggregateRoot
             throw new DomainException("Expense amount must be positive.");
 
         RaiseEvent(new ExpenseUpdated(
-            Id, UserId, amount, currency, null, null, null, null, null, null,
+            Id, UserId.Value, amount, currency, null, null, null, null, null, null,
             DateTimeOffset.UtcNow));
     }
 
-    public void Recategorize(string categoryId, string? subcategoryId = null)
+    public void Recategorize(CategoryId categoryId, SubcategoryId? subcategoryId = null)
     {
         EnsureNotDeleted();
         RaiseEvent(new ExpenseUpdated(
-            Id, UserId, null, null, null, null, categoryId, subcategoryId, null, null,
+            Id, UserId.Value, null, null, null, null, categoryId.Value, subcategoryId?.Value, null, null,
             DateTimeOffset.UtcNow));
     }
 
     public void Update(
         decimal? amount = null, Currency? currency = null, DateOnly? date = null,
-        string? description = null, string? categoryId = null, string? subcategoryId = null,
+        string? description = null, CategoryId? categoryId = null, SubcategoryId? subcategoryId = null,
         bool? recurring = null, Dictionary<string, string>? metadata = null)
     {
         EnsureNotDeleted();
@@ -66,14 +67,14 @@ public sealed class Expense : AggregateRoot
             throw new DomainException("Expense amount must be positive.");
 
         RaiseEvent(new ExpenseUpdated(
-            Id, UserId, amount, currency, date, description, categoryId, subcategoryId, recurring, metadata,
+            Id, UserId.Value, amount, currency, date, description, categoryId?.Value, subcategoryId?.Value, recurring, metadata,
             DateTimeOffset.UtcNow));
     }
 
     public void Delete()
     {
         EnsureNotDeleted();
-        RaiseEvent(new ExpenseDeleted(Id, UserId, DateTimeOffset.UtcNow));
+        RaiseEvent(new ExpenseDeleted(Id, UserId.Value, DateTimeOffset.UtcNow));
     }
 
     private void EnsureNotDeleted()
@@ -87,10 +88,10 @@ public sealed class Expense : AggregateRoot
     public void Apply(ExpenseRecorded e)
     {
         Id = e.ExpenseId;
-        UserId = e.UserId;
-        AccountId = e.AccountId;
-        CategoryId = e.CategoryId;
-        SubcategoryId = e.SubcategoryId;
+        UserId = new UserId(e.UserId);
+        AccountId = new AccountId(e.AccountId);
+        CategoryId = new CategoryId(e.CategoryId);
+        SubcategoryId = e.SubcategoryId is not null ? new SubcategoryId(e.SubcategoryId) : null;
         Amount = e.Amount;
         Currency = e.Currency;
         Date = e.Date;
@@ -106,8 +107,8 @@ public sealed class Expense : AggregateRoot
         if (e.Currency.HasValue) Currency = e.Currency.Value;
         if (e.Date.HasValue) Date = e.Date.Value;
         if (e.Description is not null) Description = e.Description;
-        if (e.CategoryId is not null) CategoryId = e.CategoryId;
-        if (e.SubcategoryId is not null) SubcategoryId = e.SubcategoryId;
+        if (e.CategoryId is not null) CategoryId = new CategoryId(e.CategoryId);
+        if (e.SubcategoryId is not null) SubcategoryId = new SubcategoryId(e.SubcategoryId);
         if (e.Recurring.HasValue) Recurring = e.Recurring.Value;
         if (e.Metadata is not null) Metadata = e.Metadata;
     }

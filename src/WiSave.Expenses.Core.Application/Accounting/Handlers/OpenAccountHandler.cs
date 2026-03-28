@@ -1,4 +1,5 @@
 using WiSave.Expenses.Contracts.Commands;
+using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Accounting;
 using WiSave.Expenses.Core.Domain.SharedKernel;
@@ -13,11 +14,11 @@ public sealed class OpenAccountHandler(IAggregateRepository<Account> repository)
         {
             var accountId = Guid.NewGuid().ToString();
             var account = Account.Open(
-                accountId, command.UserId, command.Name,
+                new AccountId(accountId), new UserId(command.UserId), command.Name,
                 command.Type,
                 command.Currency,
                 command.Balance,
-                command.LinkedBankAccountId,
+                command.LinkedBankAccountId is not null ? new AccountId(command.LinkedBankAccountId) : null,
                 command.CreditLimit,
                 command.BillingCycleDay,
                 command.Color,

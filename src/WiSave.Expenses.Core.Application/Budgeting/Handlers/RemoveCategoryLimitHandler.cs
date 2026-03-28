@@ -1,4 +1,5 @@
 using WiSave.Expenses.Contracts.Commands;
+using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Budgeting;
 using WiSave.Expenses.Core.Domain.SharedKernel;
@@ -14,10 +15,10 @@ public sealed class RemoveCategoryLimitHandler(IAggregateRepository<Budget> repo
             var budget = await repository.LoadAsync($"budget-{command.BudgetId}", ct);
             if (budget is null)
                 return CommandResult.Failure("Budget not found.");
-            if (budget.UserId != command.UserId)
+            if (budget.UserId != new UserId(command.UserId))
                 return CommandResult.Failure("Access denied.");
 
-            budget.RemoveCategoryLimit(command.CategoryId);
+            budget.RemoveCategoryLimit(new CategoryId(command.CategoryId));
             await repository.SaveAsync(budget, ct);
             return CommandResult.Success(command.BudgetId);
         }

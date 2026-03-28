@@ -1,4 +1,5 @@
 using WiSave.Expenses.Contracts.Commands;
+using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Budgeting;
 using WiSave.Expenses.Core.Domain.SharedKernel;
@@ -16,13 +17,13 @@ public sealed class SetCategoryLimitHandler(
             var budget = await repository.LoadAsync($"budget-{command.BudgetId}", ct);
             if (budget is null)
                 return CommandResult.Failure("Budget not found.");
-            if (budget.UserId != command.UserId)
+            if (budget.UserId != new UserId(command.UserId))
                 return CommandResult.Failure("Access denied.");
 
             if (!await categoryRepository.ExistsAsync(command.CategoryId, command.UserId, ct))
                 return CommandResult.Failure("Category not found.");
 
-            budget.SetCategoryLimit(command.CategoryId, command.Limit);
+            budget.SetCategoryLimit(new CategoryId(command.CategoryId), command.Limit);
             await repository.SaveAsync(budget, ct);
             return CommandResult.Success(command.BudgetId);
         }

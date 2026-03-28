@@ -1,4 +1,5 @@
 using WiSave.Expenses.Contracts.Commands;
+using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Budgeting;
 using WiSave.Expenses.Core.Domain.SharedKernel;
@@ -30,7 +31,7 @@ public sealed class CopyBudgetFromPreviousHandler(
 
             var budgetId = Guid.NewGuid().ToString();
             var newBudget = Budget.CopyFromPrevious(
-                budgetId, command.UserId, command.Month, command.Year,
+                new BudgetId(budgetId), new UserId(command.UserId), command.Month, command.Year,
                 sourceMonth, sourceYear,
                 sourceBudget.Currency, sourceBudget.TotalLimit,
                 sourceBudget.Recurring, sourceBudget.CategoryBudgets.ToDictionary(cb => cb.CategoryId, cb => cb.Limit));

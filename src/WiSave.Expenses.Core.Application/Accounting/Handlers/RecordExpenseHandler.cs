@@ -1,4 +1,5 @@
 using WiSave.Expenses.Contracts.Commands;
+using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Accounting;
 using WiSave.Expenses.Core.Domain.SharedKernel;
@@ -15,7 +16,7 @@ public sealed class RecordExpenseHandler(
         try
         {
             var account = await accountRepository.LoadAsync($"account-{command.AccountId}", ct);
-            if (account is null || account.UserId != command.UserId)
+            if (account is null || account.UserId != new UserId(command.UserId))
                 return CommandResult.Failure("Account not found or access denied.");
             if (!account.IsActive)
                 return CommandResult.Failure("Cannot record expense on a closed account.");
@@ -29,8 +30,8 @@ public sealed class RecordExpenseHandler(
 
             var expenseId = Guid.NewGuid().ToString();
             var expense = Expense.Record(
-                expenseId, command.UserId, command.AccountId, command.CategoryId,
-                command.SubcategoryId, command.Amount, command.Currency,
+                new ExpenseId(expenseId), new UserId(command.UserId), new AccountId(command.AccountId), new CategoryId(command.CategoryId),
+                command.SubcategoryId is not null ? new SubcategoryId(command.SubcategoryId) : null, command.Amount, command.Currency,
                 command.Date, command.Description, command.Recurring,
                 command.Metadata);
 

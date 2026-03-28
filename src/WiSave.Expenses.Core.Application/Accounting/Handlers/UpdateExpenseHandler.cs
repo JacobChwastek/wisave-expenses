@@ -1,4 +1,5 @@
 using WiSave.Expenses.Contracts.Commands;
+using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Accounting;
 using WiSave.Expenses.Core.Domain.SharedKernel;
@@ -14,7 +15,7 @@ public sealed class UpdateExpenseHandler(IAggregateRepository<Expense> repositor
             var expense = await repository.LoadAsync($"expense-{command.ExpenseId}", ct);
             if (expense is null)
                 return CommandResult.Failure("Expense not found.");
-            if (expense.UserId != command.UserId)
+            if (expense.UserId != new UserId(command.UserId))
                 return CommandResult.Failure("Access denied.");
 
             expense.Update(
@@ -22,8 +23,8 @@ public sealed class UpdateExpenseHandler(IAggregateRepository<Expense> repositor
                 command.Currency,
                 command.Date,
                 command.Description,
-                command.CategoryId,
-                command.SubcategoryId,
+                command.CategoryId is not null ? new CategoryId(command.CategoryId) : null,
+                command.SubcategoryId is not null ? new SubcategoryId(command.SubcategoryId) : null,
                 command.Recurring,
                 command.Metadata);
 
