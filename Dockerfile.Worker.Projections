@@ -1,0 +1,15 @@
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-preview AS base
+WORKDIR /app
+
+FROM mcr.microsoft.com/dotnet/sdk:10.0-preview AS build
+WORKDIR /src
+COPY Directory.Build.props .
+COPY NuGet.config .
+COPY WiSave.Expenses.slnx .
+COPY src/ src/
+RUN dotnet restore src/WiSave.Expenses.Worker.Projections/WiSave.Expenses.Worker.Projections.csproj
+RUN dotnet publish src/WiSave.Expenses.Worker.Projections/WiSave.Expenses.Worker.Projections.csproj -c Release -o /app/publish --no-restore
+
+FROM base AS final
+COPY --from=build /app/publish .
+ENTRYPOINT ["dotnet", "WiSave.Expenses.Worker.Projections.dll"]
