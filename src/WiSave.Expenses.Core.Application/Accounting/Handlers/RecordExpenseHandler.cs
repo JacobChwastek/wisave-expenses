@@ -1,4 +1,4 @@
-using WiSave.Expenses.Contracts.Commands;
+using WiSave.Expenses.Contracts.Commands.Expenses;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Accounting;

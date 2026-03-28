@@ -1,4 +1,4 @@
-using WiSave.Expenses.Contracts.Events;
+using WiSave.Expenses.Contracts.Events.Expenses;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Domain.SharedKernel;
 
