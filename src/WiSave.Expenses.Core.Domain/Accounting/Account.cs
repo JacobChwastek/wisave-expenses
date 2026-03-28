@@ -118,6 +118,8 @@ public sealed class Account : AggregateRoot
             throw new DomainException("Cannot modify a closed account.");
     }
 
+    #region Apply
+
     public void Apply(AccountOpened e)
     {
         Id = e.AccountId;
@@ -151,4 +153,6 @@ public sealed class Account : AggregateRoot
     {
         IsActive = false;
     }
+
+    #endregion
 }

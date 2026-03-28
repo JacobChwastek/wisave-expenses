@@ -68,6 +68,8 @@ public sealed class Budget : AggregateRoot
         RaiseEvent(new CategoryLimitRemoved(Id, UserId, categoryId, DateTimeOffset.UtcNow));
     }
 
+    #region Apply
+
     public void Apply(BudgetCreated e)
     {
         Id = e.BudgetId;
@@ -110,4 +112,6 @@ public sealed class Budget : AggregateRoot
     {
         _categoryBudgets.RemoveAll(cb => cb.CategoryId == e.CategoryId);
     }
+
+    #endregion
 }

@@ -82,6 +82,8 @@ public sealed class Expense : AggregateRoot
             throw new DomainException("Cannot modify a deleted expense.");
     }
 
+    #region Apply
+
     public void Apply(ExpenseRecorded e)
     {
         Id = e.ExpenseId;
@@ -114,4 +116,6 @@ public sealed class Expense : AggregateRoot
     {
         IsDeleted = true;
     }
+
+    #endregion
 }
