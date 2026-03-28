@@ -20,6 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\WiSave.Expenses.Core.Domain\WiSave.Expenses.Core.Domain.csproj" />
+    <ProjectReference Include="..\..\src\WiSave.Expenses.Contracts\WiSave.Expenses.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

@@ -14,8 +14,8 @@ public sealed class OpenAccountHandler(IAggregateRepository<Account> repository)
             var accountId = Guid.NewGuid().ToString();
             var account = Account.Open(
                 accountId, command.UserId, command.Name,
-                command.Type.ToString().ToLowerInvariant(),
-                command.Currency.ToString(),
+                command.Type,
+                command.Currency,
                 command.Balance,
                 command.LinkedBankAccountId,
                 command.CreditLimit,

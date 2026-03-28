@@ -19,7 +19,7 @@ public sealed class CreateBudgetHandler(
             var budgetId = Guid.NewGuid().ToString();
             var budget = Budget.Create(
                 budgetId, command.UserId, command.Month, command.Year,
-                command.TotalLimit, command.Currency.ToString(), command.Recurring);
+                command.TotalLimit, command.Currency, command.Recurring);
 
             await uniquenessChecker.ReserveAsync(budgetId, command.UserId, command.Month, command.Year, ct);
             await repository.SaveAsync(budget, ct);

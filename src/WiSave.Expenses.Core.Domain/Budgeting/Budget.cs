@@ -1,4 +1,5 @@
-using WiSave.Expenses.Core.Domain.Budgeting.Events;
+using WiSave.Expenses.Contracts.Events;
+using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Domain.SharedKernel;
 
 namespace WiSave.Expenses.Core.Domain.Budgeting;
@@ -9,7 +10,7 @@ public sealed class Budget : AggregateRoot
     public int Month { get; private set; }
     public int Year { get; private set; }
     public decimal TotalLimit { get; private set; }
-    public string Currency { get; private set; } = string.Empty;
+    public Currency Currency { get; private set; }
     public bool Recurring { get; private set; } = true;
 
     private readonly Dictionary<string, decimal> _categoryLimits = [];
@@ -18,7 +19,7 @@ public sealed class Budget : AggregateRoot
     public Budget() { }
 
     public static Budget Create(
-        string id, string userId, int month, int year, decimal totalLimit, string currency, bool recurring = true)
+        string id, string userId, int month, int year, decimal totalLimit, Currency currency, bool recurring = true)
     {
         if (totalLimit < 0)
             throw new DomainException("Total limit must be >= 0.");
@@ -26,22 +27,25 @@ public sealed class Budget : AggregateRoot
             throw new DomainException("Month must be between 1 and 12.");
 
         var budget = new Budget();
-        budget.RaiseEvent(new BudgetCreatedEvent(id, userId, month, year, totalLimit, currency, recurring));
+        budget.RaiseEvent(new BudgetCreated(id, userId, month, year, totalLimit, currency, recurring, DateTimeOffset.UtcNow));
         return budget;
     }
 
     public static Budget CopyFromPrevious(
         string id, string userId, int month, int year, int sourceMonth, int sourceYear,
-        string currency, decimal totalLimit, bool recurring, IReadOnlyDictionary<string, decimal> categoryLimits)
+        Currency currency, decimal totalLimit, bool recurring, IReadOnlyDictionary<string, decimal> categoryLimits)
     {
         var budget = new Budget();
-        budget.RaiseEvent(new BudgetCopiedFromPreviousEvent(
-            id, userId, month, year, sourceMonth, sourceYear,
-            categoryLimits.Select(kv => new CategoryBudgetSnapshot(kv.Key, kv.Value)).ToList()));
-        // Restore fields that CopyFromPrevious carries from the source
+        budget.RaiseEvent(new BudgetCopiedFromPrevious(
+            id, userId, month, year, sourceMonth, sourceYear, DateTimeOffset.UtcNow));
+
+        // Apply source state that the event doesn't carry
         budget.Currency = currency;
         budget.TotalLimit = totalLimit;
         budget.Recurring = recurring;
+        foreach (var (catId, limit) in categoryLimits)
+            budget._categoryLimits[catId] = limit;
+
         return budget;
     }
 
@@ -50,7 +54,7 @@ public sealed class Budget : AggregateRoot
         if (totalLimit < 0)
             throw new DomainException("Total limit must be >= 0.");
 
-        RaiseEvent(new OverallLimitSetEvent(Id, totalLimit));
+        RaiseEvent(new OverallLimitSet(Id, UserId, totalLimit, DateTimeOffset.UtcNow));
     }
 
     public void SetCategoryLimit(string categoryId, decimal limit)
@@ -58,7 +62,7 @@ public sealed class Budget : AggregateRoot
         if (limit < 0)
             throw new DomainException("Category limit must be >= 0.");
 
-        RaiseEvent(new CategoryLimitSetEvent(Id, categoryId, limit));
+        RaiseEvent(new CategoryLimitSet(Id, UserId, categoryId, limit, DateTimeOffset.UtcNow));
     }
 
     public void RemoveCategoryLimit(string categoryId)
@@ -66,19 +70,14 @@ public sealed class Budget : AggregateRoot
         if (!_categoryLimits.ContainsKey(categoryId))
             throw new DomainException($"Category '{categoryId}' does not have a budget.");
 
-        RaiseEvent(new CategoryLimitRemovedEvent(Id, categoryId));
-    }
-
-    public void ToggleRecurring(bool recurring)
-    {
-        RaiseEvent(new RecurringToggledEvent(Id, recurring));
+        RaiseEvent(new CategoryLimitRemoved(Id, UserId, categoryId, DateTimeOffset.UtcNow));
     }
 
     protected override void Apply(object @event)
     {
         switch (@event)
         {
-            case BudgetCreatedEvent e:
+            case BudgetCreated e:
                 Id = e.BudgetId;
                 UserId = e.UserId;
                 Month = e.Month;
@@ -88,29 +87,23 @@ public sealed class Budget : AggregateRoot
                 Recurring = e.Recurring;
                 break;
 
-            case BudgetCopiedFromPreviousEvent e:
+            case BudgetCopiedFromPrevious e:
                 Id = e.BudgetId;
                 UserId = e.UserId;
                 Month = e.Month;
                 Year = e.Year;
-                foreach (var cb in e.CategoryBudgets)
-                    _categoryLimits[cb.CategoryId] = cb.Limit;
                 break;
 
-            case OverallLimitSetEvent e:
+            case OverallLimitSet e:
                 TotalLimit = e.TotalLimit;
                 break;
 
-            case CategoryLimitSetEvent e:
+            case CategoryLimitSet e:
                 _categoryLimits[e.CategoryId] = e.Limit;
                 break;
 
-            case CategoryLimitRemovedEvent e:
+            case CategoryLimitRemoved e:
                 _categoryLimits.Remove(e.CategoryId);
-                break;
-
-            case RecurringToggledEvent e:
-                Recurring = e.Recurring;
                 break;
         }
     }

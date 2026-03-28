@@ -19,7 +19,7 @@ public sealed class UpdateExpenseHandler(IAggregateRepository<Expense> repositor
 
             expense.Update(
                 command.Amount,
-                command.Currency?.ToString(),
+                command.Currency,
                 command.Date,
                 command.Description,
                 command.CategoryId,

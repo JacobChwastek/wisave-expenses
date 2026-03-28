@@ -30,7 +30,7 @@ public sealed class RecordExpenseHandler(
             var expenseId = Guid.NewGuid().ToString();
             var expense = Expense.Record(
                 expenseId, command.UserId, command.AccountId, command.CategoryId,
-                command.SubcategoryId, command.Amount, command.Currency.ToString(),
+                command.SubcategoryId, command.Amount, command.Currency,
                 command.Date, command.Description, command.Recurring,
                 command.Metadata);
 

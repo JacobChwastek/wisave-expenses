@@ -19,8 +19,8 @@ public sealed class UpdateAccountHandler(IAggregateRepository<Account> repositor
 
             account.Update(
                 command.Name,
-                command.Type.ToString().ToLowerInvariant(),
-                command.Currency.ToString(),
+                command.Type,
+                command.Currency,
                 command.Balance,
                 command.LinkedBankAccountId,
                 command.CreditLimit,
