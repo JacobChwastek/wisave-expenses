@@ -1,14 +1,16 @@
 <Solution>
   <Folder Name="/src/">
     <Project Path="src/WiSave.Expenses.Contracts/WiSave.Expenses.Contracts.csproj" />
-    <Project Path="src/WiSave.Expenses.Core.Application/WiSave.Expenses.Core.Application.csproj" />
-    <Project Path="src/WiSave.Expenses.Core.Domain/WiSave.Expenses.Core.Domain.csproj" />
-    <Project Path="src/WiSave.Expenses.Core.Infrastructure/WiSave.Expenses.Core.Infrastructure.csproj" />
     <Project Path="src/WiSave.Expenses.Projections/WiSave.Expenses.Projections.csproj" />
     <Project Path="src/WiSave.Expenses.Subscriptions/WiSave.Expenses.Subscriptions.csproj" />
     <Project Path="src/WiSave.Expenses.WebApi/WiSave.Expenses.WebApi.csproj" />
     <Project Path="src/WiSave.Expenses.Worker.Domain/WiSave.Expenses.Worker.Domain.csproj" />
     <Project Path="src/WiSave.Expenses.Worker.Projections/WiSave.Expenses.Worker.Projections.csproj" />
+  </Folder>
+  <Folder Name="/src/Core/">
+    <Project Path="src/WiSave.Expenses.Core.Application/WiSave.Expenses.Core.Application.csproj" />
+    <Project Path="src/WiSave.Expenses.Core.Domain/WiSave.Expenses.Core.Domain.csproj" />
+    <Project Path="src/WiSave.Expenses.Core.Infrastructure/WiSave.Expenses.Core.Infrastructure.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/WiSave.Expenses.Contracts.Tests/WiSave.Expenses.Contracts.Tests.csproj" />
