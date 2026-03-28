@@ -12,6 +12,7 @@
     <Project Path="src/WiSave.Expenses.Core.Domain/WiSave.Expenses.Core.Domain.csproj" />
     <Project Path="src/WiSave.Expenses.Core.Infrastructure/WiSave.Expenses.Core.Infrastructure.csproj" />
   </Folder>
+  <Folder Name="/src/Shared/" />
   <Folder Name="/tests/">
     <Project Path="tests/WiSave.Expenses.Contracts.Tests/WiSave.Expenses.Contracts.Tests.csproj" />
     <Project Path="tests/WiSave.Expenses.Core.Application.Tests/WiSave.Expenses.Core.Application.Tests.csproj" />
