@@ -48,7 +48,7 @@ public sealed class Account : AggregateRoot
 
         RaiseEvent(new AccountUpdated(
             Id, UserId, name, Type, Currency, Balance,
-            LinkedBankAccountId, CreditLimit, BillingCycleDay?.Day, Color, LastFourDigits,
+            LinkedBankAccountId, CreditLimit, BillingCycleDay?.Value, Color, LastFourDigits,
             DateTimeOffset.UtcNow));
     }
 
@@ -62,7 +62,7 @@ public sealed class Account : AggregateRoot
 
         RaiseEvent(new AccountUpdated(
             Id, UserId, Name, Type, Currency, Balance,
-            LinkedBankAccountId, limit, BillingCycleDay?.Day, Color, LastFourDigits,
+            LinkedBankAccountId, limit, BillingCycleDay?.Value, Color, LastFourDigits,
             DateTimeOffset.UtcNow));
     }
 
@@ -74,7 +74,7 @@ public sealed class Account : AggregateRoot
 
         RaiseEvent(new AccountUpdated(
             Id, UserId, Name, Type, Currency, Balance,
-            bankAccountId, CreditLimit, BillingCycleDay?.Day, Color, LastFourDigits,
+            bankAccountId, CreditLimit, BillingCycleDay?.Value, Color, LastFourDigits,
             DateTimeOffset.UtcNow));
     }
 
@@ -86,7 +86,7 @@ public sealed class Account : AggregateRoot
 
         RaiseEvent(new AccountUpdated(
             Id, UserId, Name, Type, Currency, Balance,
-            LinkedBankAccountId, CreditLimit, day.Day, Color, LastFourDigits,
+            LinkedBankAccountId, CreditLimit, day.Value, Color, LastFourDigits,
             DateTimeOffset.UtcNow));
     }
 
