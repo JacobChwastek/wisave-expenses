@@ -11,4 +11,7 @@ public sealed record BillingCycleDay
 
         Value = value;
     }
+
+    public static explicit operator int(BillingCycleDay day) => day.Value;
+    public static explicit operator BillingCycleDay(int value) => new(value);
 }
