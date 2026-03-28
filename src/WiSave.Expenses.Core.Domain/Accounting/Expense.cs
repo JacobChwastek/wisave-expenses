@@ -82,39 +82,36 @@ public sealed class Expense : AggregateRoot
             throw new DomainException("Cannot modify a deleted expense.");
     }
 
-    protected override void Apply(object @event)
+    public void Apply(ExpenseRecorded e)
     {
-        switch (@event)
-        {
-            case ExpenseRecorded e:
-                Id = e.ExpenseId;
-                UserId = e.UserId;
-                AccountId = e.AccountId;
-                CategoryId = e.CategoryId;
-                SubcategoryId = e.SubcategoryId;
-                Amount = e.Amount;
-                Currency = e.Currency;
-                Date = e.Date;
-                Description = e.Description;
-                Recurring = e.Recurring;
-                Metadata = e.Metadata;
-                IsDeleted = false;
-                break;
+        Id = e.ExpenseId;
+        UserId = e.UserId;
+        AccountId = e.AccountId;
+        CategoryId = e.CategoryId;
+        SubcategoryId = e.SubcategoryId;
+        Amount = e.Amount;
+        Currency = e.Currency;
+        Date = e.Date;
+        Description = e.Description;
+        Recurring = e.Recurring;
+        Metadata = e.Metadata;
+        IsDeleted = false;
+    }
 
-            case ExpenseUpdated e:
-                if (e.Amount.HasValue) Amount = e.Amount.Value;
-                if (e.Currency.HasValue) Currency = e.Currency.Value;
-                if (e.Date.HasValue) Date = e.Date.Value;
-                if (e.Description is not null) Description = e.Description;
-                if (e.CategoryId is not null) CategoryId = e.CategoryId;
-                if (e.SubcategoryId is not null) SubcategoryId = e.SubcategoryId;
-                if (e.Recurring.HasValue) Recurring = e.Recurring.Value;
-                if (e.Metadata is not null) Metadata = e.Metadata;
-                break;
+    public void Apply(ExpenseUpdated e)
+    {
+        if (e.Amount.HasValue) Amount = e.Amount.Value;
+        if (e.Currency.HasValue) Currency = e.Currency.Value;
+        if (e.Date.HasValue) Date = e.Date.Value;
+        if (e.Description is not null) Description = e.Description;
+        if (e.CategoryId is not null) CategoryId = e.CategoryId;
+        if (e.SubcategoryId is not null) SubcategoryId = e.SubcategoryId;
+        if (e.Recurring.HasValue) Recurring = e.Recurring.Value;
+        if (e.Metadata is not null) Metadata = e.Metadata;
+    }
 
-            case ExpenseDeleted:
-                IsDeleted = true;
-                break;
-        }
+    public void Apply(ExpenseDeleted e)
+    {
+        IsDeleted = true;
     }
 }

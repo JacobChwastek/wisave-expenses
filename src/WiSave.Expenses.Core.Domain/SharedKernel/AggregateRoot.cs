@@ -1,7 +1,12 @@
+using System.Collections.Concurrent;
+using System.Reflection;
+
 namespace WiSave.Expenses.Core.Domain.SharedKernel;
 
 public abstract class AggregateRoot
 {
+    private static readonly ConcurrentDictionary<(Type Aggregate, Type Event), MethodInfo> MethodCache = new();
+
     public string Id { get; protected set; } = string.Empty;
     public int Version { get; private set; } = -1;
 
@@ -11,9 +16,9 @@ public abstract class AggregateRoot
 
     public void ClearUncommittedEvents() => _uncommittedEvents.Clear();
 
-    protected void RaiseEvent(object @event)
+    protected void RaiseEvent<TEvent>(TEvent @event) where TEvent : notnull
     {
-        Apply(@event);
+        ApplyEvent(@event);
         _uncommittedEvents.Add(@event);
     }
 
@@ -21,10 +26,18 @@ public abstract class AggregateRoot
     {
         foreach (var @event in events)
         {
-            Apply(@event);
+            ApplyEvent(@event);
             Version++;
         }
     }
 
-    protected abstract void Apply(object @event);
+    private void ApplyEvent(object @event)
+    {
+        var key = (GetType(), @event.GetType());
+        var method = MethodCache.GetOrAdd(key, static k =>
+            k.Aggregate.GetMethod("Apply", BindingFlags.Public | BindingFlags.Instance, [k.Event])
+            ?? throw new InvalidOperationException($"{k.Aggregate.Name} has no Apply({k.Event.Name}) method."));
+
+        method.Invoke(this, [@event]);
+    }
 }

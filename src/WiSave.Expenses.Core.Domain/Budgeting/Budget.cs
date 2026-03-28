@@ -68,47 +68,46 @@ public sealed class Budget : AggregateRoot
         RaiseEvent(new CategoryLimitRemoved(Id, UserId, categoryId, DateTimeOffset.UtcNow));
     }
 
-    protected override void Apply(object @event)
+    public void Apply(BudgetCreated e)
     {
-        switch (@event)
-        {
-            case BudgetCreated e:
-                Id = e.BudgetId;
-                UserId = e.UserId;
-                Period = new BudgetPeriod(e.Month, e.Year);
-                TotalLimit = e.TotalLimit;
-                Currency = e.Currency;
-                Recurring = e.Recurring;
-                break;
+        Id = e.BudgetId;
+        UserId = e.UserId;
+        Period = new BudgetPeriod(e.Month, e.Year);
+        TotalLimit = e.TotalLimit;
+        Currency = e.Currency;
+        Recurring = e.Recurring;
+    }
 
-            case BudgetCopiedFromPrevious e:
-                Id = e.BudgetId;
-                UserId = e.UserId;
-                Period = new BudgetPeriod(e.Month, e.Year);
-                TotalLimit = e.TotalLimit;
-                Currency = e.Currency;
-                Recurring = e.Recurring;
-                _categoryBudgets.Clear();
-                foreach (var (catId, limit) in e.CategoryLimits)
-                    _categoryBudgets.Add(new CategoryBudget(catId, limit));
-                break;
+    public void Apply(BudgetCopiedFromPrevious e)
+    {
+        Id = e.BudgetId;
+        UserId = e.UserId;
+        Period = new BudgetPeriod(e.Month, e.Year);
+        TotalLimit = e.TotalLimit;
+        Currency = e.Currency;
+        Recurring = e.Recurring;
+        _categoryBudgets.Clear();
+        foreach (var (catId, limit) in e.CategoryLimits)
+            _categoryBudgets.Add(new CategoryBudget(catId, limit));
+    }
 
-            case OverallLimitSet e:
-                TotalLimit = e.TotalLimit;
-                break;
+    public void Apply(OverallLimitSet e)
+    {
+        TotalLimit = e.TotalLimit;
+    }
 
-            case CategoryLimitSet e:
-                var existing = _categoryBudgets.FindIndex(cb => cb.CategoryId == e.CategoryId);
-                var newCb = new CategoryBudget(e.CategoryId, e.Limit);
-                if (existing >= 0)
-                    _categoryBudgets[existing] = newCb;
-                else
-                    _categoryBudgets.Add(newCb);
-                break;
+    public void Apply(CategoryLimitSet e)
+    {
+        var existing = _categoryBudgets.FindIndex(cb => cb.CategoryId == e.CategoryId);
+        var newCb = new CategoryBudget(e.CategoryId, e.Limit);
+        if (existing >= 0)
+            _categoryBudgets[existing] = newCb;
+        else
+            _categoryBudgets.Add(newCb);
+    }
 
-            case CategoryLimitRemoved e:
-                _categoryBudgets.RemoveAll(cb => cb.CategoryId == e.CategoryId);
-                break;
-        }
+    public void Apply(CategoryLimitRemoved e)
+    {
+        _categoryBudgets.RemoveAll(cb => cb.CategoryId == e.CategoryId);
     }
 }

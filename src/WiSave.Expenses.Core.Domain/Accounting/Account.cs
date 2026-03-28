@@ -118,40 +118,37 @@ public sealed class Account : AggregateRoot
             throw new DomainException("Cannot modify a closed account.");
     }
 
-    protected override void Apply(object @event)
+    public void Apply(AccountOpened e)
     {
-        switch (@event)
-        {
-            case AccountOpened e:
-                Id = e.AccountId;
-                UserId = e.UserId;
-                Name = e.Name;
-                Type = e.Type;
-                Currency = e.Currency;
-                Balance = e.Balance;
-                LinkedBankAccountId = e.LinkedBankAccountId;
-                CreditLimit = e.CreditLimit;
-                BillingCycleDay = e.BillingCycleDay.HasValue ? new BillingCycleDay(e.BillingCycleDay.Value) : null;
-                Color = e.Color;
-                LastFourDigits = e.LastFourDigits;
-                IsActive = true;
-                break;
+        Id = e.AccountId;
+        UserId = e.UserId;
+        Name = e.Name;
+        Type = e.Type;
+        Currency = e.Currency;
+        Balance = e.Balance;
+        LinkedBankAccountId = e.LinkedBankAccountId;
+        CreditLimit = e.CreditLimit;
+        BillingCycleDay = e.BillingCycleDay.HasValue ? new BillingCycleDay(e.BillingCycleDay.Value) : null;
+        Color = e.Color;
+        LastFourDigits = e.LastFourDigits;
+        IsActive = true;
+    }
 
-            case AccountUpdated e:
-                Name = e.Name;
-                Type = e.Type;
-                Currency = e.Currency;
-                Balance = e.Balance;
-                LinkedBankAccountId = e.LinkedBankAccountId;
-                CreditLimit = e.CreditLimit;
-                BillingCycleDay = e.BillingCycleDay.HasValue ? new BillingCycleDay(e.BillingCycleDay.Value) : null;
-                Color = e.Color;
-                LastFourDigits = e.LastFourDigits;
-                break;
+    public void Apply(AccountUpdated e)
+    {
+        Name = e.Name;
+        Type = e.Type;
+        Currency = e.Currency;
+        Balance = e.Balance;
+        LinkedBankAccountId = e.LinkedBankAccountId;
+        CreditLimit = e.CreditLimit;
+        BillingCycleDay = e.BillingCycleDay.HasValue ? new BillingCycleDay(e.BillingCycleDay.Value) : null;
+        Color = e.Color;
+        LastFourDigits = e.LastFourDigits;
+    }
 
-            case AccountClosed:
-                IsActive = false;
-                break;
-        }
+    public void Apply(AccountClosed e)
+    {
+        IsActive = false;
     }
 }
