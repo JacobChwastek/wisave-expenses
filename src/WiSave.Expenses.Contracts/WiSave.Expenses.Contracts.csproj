@@ -1,9 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <PackageId>WiSave.Expenses.Contracts</PackageId>
+    <Version>0.1.0</Version>
+    <Description>Shared commands, integration events, and models for the WiSave Expenses microservice</Description>
+    <Authors>JacobChwastek</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/JacobChwastek/wisave-expenses</RepositoryUrl>
+    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
 </Project>
