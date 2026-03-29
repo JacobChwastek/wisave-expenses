@@ -15,7 +15,6 @@
     <ProjectReference Include="..\WiSave.Expenses.Core.Application\WiSave.Expenses.Core.Application.csproj" />
     <ProjectReference Include="..\WiSave.Expenses.Core.Domain\WiSave.Expenses.Core.Domain.csproj" />
     <ProjectReference Include="..\WiSave.Expenses.Core.Infrastructure\WiSave.Expenses.Core.Infrastructure.csproj" />
-    <ProjectReference Include="..\WiSave.Expenses.Subscriptions\WiSave.Expenses.Subscriptions.csproj" />
     <ProjectReference Include="..\WiSave.Expenses.Contracts\WiSave.Expenses.Contracts.csproj" />
   </ItemGroup>
 </Project>

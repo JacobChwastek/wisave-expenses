@@ -2,7 +2,6 @@
   <Folder Name="/src/">
     <Project Path="src/WiSave.Expenses.Contracts/WiSave.Expenses.Contracts.csproj" />
     <Project Path="src/WiSave.Expenses.Projections/WiSave.Expenses.Projections.csproj" />
-    <Project Path="src/WiSave.Expenses.Subscriptions/WiSave.Expenses.Subscriptions.csproj" />
     <Project Path="src/WiSave.Expenses.WebApi/WiSave.Expenses.WebApi.csproj" />
     <Project Path="src/WiSave.Expenses.Worker.Domain/WiSave.Expenses.Worker.Domain.csproj" />
     <Project Path="src/WiSave.Expenses.Worker.Projections/WiSave.Expenses.Worker.Projections.csproj" />
@@ -12,7 +11,6 @@
     <Project Path="src/WiSave.Expenses.Core.Domain/WiSave.Expenses.Core.Domain.csproj" />
     <Project Path="src/WiSave.Expenses.Core.Infrastructure/WiSave.Expenses.Core.Infrastructure.csproj" />
   </Folder>
-  <Folder Name="/src/Shared/" />
   <Folder Name="/tests/">
     <Project Path="tests/WiSave.Expenses.Contracts.Tests/WiSave.Expenses.Contracts.Tests.csproj" />
     <Project Path="tests/WiSave.Expenses.Core.Application.Tests/WiSave.Expenses.Core.Application.Tests.csproj" />

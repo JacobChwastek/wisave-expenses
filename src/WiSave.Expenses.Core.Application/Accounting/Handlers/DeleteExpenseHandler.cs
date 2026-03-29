@@ -19,6 +19,7 @@ public sealed class DeleteExpenseHandler(IAggregateRepository<Expense> repositor
                 return CommandResult.Failure("Access denied.");
 
             expense.Delete();
+            
             await repository.SaveAsync(expense, ct);
             return CommandResult.Success(command.ExpenseId);
         }
