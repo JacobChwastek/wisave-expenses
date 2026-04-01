@@ -2,7 +2,7 @@ name: Publish Contracts NuGet
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     paths:
       - 'src/WiSave.Expenses.Contracts/**'
 
