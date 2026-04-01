@@ -1,4 +1,6 @@
+using MassTransit;
 using WiSave.Expenses.Contracts.Commands.Budgets;
+using WiSave.Expenses.Contracts.Events;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Budgeting;
@@ -6,54 +8,44 @@ using WiSave.Expenses.Core.Domain.SharedKernel;
 
 namespace WiSave.Expenses.Core.Application.Budgeting.Handlers;
 
-public sealed class CopyBudgetFromPreviousHandler(
-    IAggregateRepository<Budget> repository,
-    IBudgetUniquenessChecker uniquenessChecker)
+public sealed class CopyBudgetFromPreviousHandler(IAggregateRepository<Budget> repository) : IConsumer<CopyBudgetFromPrevious>
 {
-    public async Task<CommandResult> HandleAsync(CopyBudgetFromPrevious command, CancellationToken ct = default)
+    public async Task Consume(ConsumeContext<CopyBudgetFromPrevious> context)
     {
+        var command = context.Message;
         try
         {
-            if (await uniquenessChecker.ExistsAsync(command.UserId, command.Month, command.Year, ct))
-                return CommandResult.Failure($"Budget for {command.Month}/{command.Year} already exists.");
-
             var sourceMonth = command.Month == 1 ? 12 : command.Month - 1;
             var sourceYear = command.Month == 1 ? command.Year - 1 : command.Year;
 
-            // Find source budget by scanning known stream name pattern
-            // In practice, the uniqueness checker table can provide the source budgetId
-            // For now, we use a convention-based stream lookup
-            var sourceBudget = await FindBudgetForMonthAsync(command.UserId, sourceMonth, sourceYear, ct);
+            var sourceStreamId = $"budget-{command.UserId}-{sourceYear}-{sourceMonth:D2}";
+            var sourceBudget = await repository.LoadAsync(sourceStreamId, context.CancellationToken);
             if (sourceBudget is null)
-                return CommandResult.Failure("No previous month budget found to copy from.");
+            {
+                await context.Publish(new CommandFailed(
+                    command.CorrelationId, command.UserId, nameof(CopyBudgetFromPrevious), "No previous month budget found to copy from.", DateTimeOffset.UtcNow));
+                return;
+            }
             if (!sourceBudget.Recurring)
-                return CommandResult.Failure("Previous month budget is not marked as recurring.");
+            {
+                await context.Publish(new CommandFailed(
+                    command.CorrelationId, command.UserId, nameof(CopyBudgetFromPrevious), "Previous month budget is not marked as recurring.", DateTimeOffset.UtcNow));
+                return;
+            }
 
-            var budgetId = Guid.NewGuid().ToString();
+            var budgetId = $"{command.UserId}-{command.Year}-{command.Month:D2}";
             var newBudget = Budget.CopyFromPrevious(
                 new BudgetId(budgetId), new UserId(command.UserId), command.Month, command.Year,
                 sourceMonth, sourceYear,
                 sourceBudget.Currency, sourceBudget.TotalLimit,
                 sourceBudget.Recurring, sourceBudget.CategoryBudgets.ToDictionary(cb => cb.CategoryId, cb => cb.Limit));
 
-            await uniquenessChecker.ReserveAsync(budgetId, command.UserId, command.Month, command.Year, ct);
-            await repository.SaveAsync(newBudget, ct);
-            return CommandResult.Success(budgetId);
+            await repository.SaveAsync(newBudget, context.CancellationToken);
         }
         catch (DomainException ex)
         {
-            return CommandResult.Failure(ex.Message);
+            await context.Publish(new CommandFailed(
+                command.CorrelationId, command.UserId, nameof(CopyBudgetFromPrevious), ex.Message, DateTimeOffset.UtcNow));
         }
-    }
-
-    private async Task<Budget?> FindBudgetForMonthAsync(string userId, int month, int year, CancellationToken ct)
-    {
-        // TODO: In infrastructure, implement a lookup from the uniqueness table to get the budgetId
-        // then load the aggregate by stream name. For now this is a placeholder.
-        _ = userId;
-        _ = month;
-        _ = year;
-        _ = ct;
-        return null;
     }
 }
