@@ -3,6 +3,12 @@
   <ItemGroup>
     <ProjectReference Include="..\WiSave.Expenses.Contracts\WiSave.Expenses.Contracts.csproj" />
     <ProjectReference Include="..\WiSave.Expenses.Projections\WiSave.Expenses.Projections.csproj" />
+    <ProjectReference Include="..\WiSave.Expenses.Core.Infrastructure\WiSave.Expenses.Core.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit.RabbitMQ" Version="9.1.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.5" />
   </ItemGroup>
 
   <PropertyGroup>
