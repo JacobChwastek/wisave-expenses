@@ -1,4 +1,6 @@
+using MassTransit;
 using WiSave.Expenses.Contracts.Commands.Accounts;
+using WiSave.Expenses.Contracts.Events;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Accounting;
@@ -6,10 +8,11 @@ using WiSave.Expenses.Core.Domain.SharedKernel;
 
 namespace WiSave.Expenses.Core.Application.Accounting.Handlers;
 
-public sealed class OpenAccountHandler(IAggregateRepository<Account> repository)
+public sealed class OpenAccountHandler(IAggregateRepository<Account> repository) : IConsumer<OpenAccount>
 {
-    public async Task<CommandResult> HandleAsync(OpenAccount command, CancellationToken ct = default)
+    public async Task Consume(ConsumeContext<OpenAccount> context)
     {
+        var command = context.Message;
         try
         {
             var accountId = Guid.NewGuid().ToString();
@@ -24,12 +27,12 @@ public sealed class OpenAccountHandler(IAggregateRepository<Account> repository)
                 command.Color,
                 command.LastFourDigits);
 
-            await repository.SaveAsync(account, ct);
-            return CommandResult.Success(accountId);
+            await repository.SaveAsync(account, context.CancellationToken);
         }
         catch (DomainException ex)
         {
-            return CommandResult.Failure(ex.Message);
+            await context.Publish(new CommandFailed(
+                command.CorrelationId, command.UserId, nameof(OpenAccount), ex.Message, DateTimeOffset.UtcNow));
         }
     }
 }

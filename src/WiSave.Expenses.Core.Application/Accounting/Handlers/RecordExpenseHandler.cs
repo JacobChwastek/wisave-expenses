@@ -1,4 +1,6 @@
+using MassTransit;
 using WiSave.Expenses.Contracts.Commands.Expenses;
+using WiSave.Expenses.Contracts.Events;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Accounting;
@@ -9,24 +11,41 @@ namespace WiSave.Expenses.Core.Application.Accounting.Handlers;
 public sealed class RecordExpenseHandler(
     IAggregateRepository<Expense> expenseRepository,
     IAggregateRepository<Account> accountRepository,
-    ICategoryRepository categoryRepository)
+    ICategoryRepository categoryRepository) : IConsumer<RecordExpense>
 {
-    public async Task<CommandResult> HandleAsync(RecordExpense command, CancellationToken ct = default)
+    public async Task Consume(ConsumeContext<RecordExpense> context)
     {
+        var command = context.Message;
         try
         {
-            var account = await accountRepository.LoadAsync($"account-{command.AccountId}", ct);
+            var account = await accountRepository.LoadAsync($"account-{command.AccountId}", context.CancellationToken);
             if (account is null || account.UserId != new UserId(command.UserId))
-                return CommandResult.Failure("Account not found or access denied.");
+            {
+                await context.Publish(new CommandFailed(
+                    command.CorrelationId, command.UserId, nameof(RecordExpense), "Account not found or access denied.", DateTimeOffset.UtcNow));
+                return;
+            }
             if (!account.IsActive)
-                return CommandResult.Failure("Cannot record expense on a closed account.");
+            {
+                await context.Publish(new CommandFailed(
+                    command.CorrelationId, command.UserId, nameof(RecordExpense), "Cannot record expense on a closed account.", DateTimeOffset.UtcNow));
+                return;
+            }
 
-            if (!await categoryRepository.ExistsAsync(command.CategoryId, command.UserId, ct))
-                return CommandResult.Failure("Category not found.");
+            if (!await categoryRepository.ExistsAsync(command.CategoryId, command.UserId, context.CancellationToken))
+            {
+                await context.Publish(new CommandFailed(
+                    command.CorrelationId, command.UserId, nameof(RecordExpense), "Category not found.", DateTimeOffset.UtcNow));
+                return;
+            }
 
             if (command.SubcategoryId is not null &&
-                !await categoryRepository.SubcategoryExistsAsync(command.SubcategoryId, command.CategoryId, ct))
-                return CommandResult.Failure("Subcategory not found.");
+                !await categoryRepository.SubcategoryExistsAsync(command.SubcategoryId, command.CategoryId, context.CancellationToken))
+            {
+                await context.Publish(new CommandFailed(
+                    command.CorrelationId, command.UserId, nameof(RecordExpense), "Subcategory not found.", DateTimeOffset.UtcNow));
+                return;
+            }
 
             var expenseId = Guid.NewGuid().ToString();
             var expense = Expense.Record(
@@ -35,12 +54,12 @@ public sealed class RecordExpenseHandler(
                 command.Date, command.Description, command.Recurring,
                 command.Metadata);
 
-            await expenseRepository.SaveAsync(expense, ct);
-            return CommandResult.Success(expenseId);
+            await expenseRepository.SaveAsync(expense, context.CancellationToken);
         }
         catch (DomainException ex)
         {
-            return CommandResult.Failure(ex.Message);
+            await context.Publish(new CommandFailed(
+                command.CorrelationId, command.UserId, nameof(RecordExpense), ex.Message, DateTimeOffset.UtcNow));
         }
     }
 }
