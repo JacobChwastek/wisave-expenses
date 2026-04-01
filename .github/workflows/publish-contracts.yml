@@ -1,0 +1,40 @@
+name: Publish Contracts NuGet
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/WiSave.Expenses.Contracts/**'
+
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  PACKAGE_PROJECT: src/WiSave.Expenses.Contracts/WiSave.Expenses.Contracts.csproj
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore
+        run: dotnet restore ${{ env.PACKAGE_PROJECT }}
+
+      - name: Build
+        run: dotnet build ${{ env.PACKAGE_PROJECT }} -c Release --no-restore
+
+      - name: Pack
+        run: dotnet pack ${{ env.PACKAGE_PROJECT }} -c Release --no-build -o ./nupkg
+
+      - name: Push to GitHub Packages
+        run: dotnet nuget push ./nupkg/*.nupkg --source "https://nuget.pkg.github.com/JacobChwastek/index.json" --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
