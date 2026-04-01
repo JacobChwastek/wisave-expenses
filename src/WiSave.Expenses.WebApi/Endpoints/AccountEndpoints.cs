@@ -4,7 +4,7 @@ using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Infrastructure.Identity;
 using WiSave.Expenses.Projections.Queries;
 
-namespace WiSave.Expenses.WebApi.Endpoints.Accounts;
+namespace WiSave.Expenses.WebApi.Endpoints;
 
 public static class AccountEndpoints
 {

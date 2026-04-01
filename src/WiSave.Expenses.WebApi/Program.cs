@@ -4,8 +4,7 @@ using WiSave.Expenses.Core.Infrastructure.Identity;
 using WiSave.Expenses.Core.Infrastructure.Postgres;
 using WiSave.Expenses.Projections;
 using WiSave.Expenses.Projections.Queries;
-using WiSave.Expenses.WebApi.Endpoints.Accounts;
-using WiSave.Expenses.WebApi.Endpoints.Budgets;
+using WiSave.Expenses.WebApi.Endpoints;
 using WiSave.Expenses.WebApi.Endpoints.Categories;
 using WiSave.Expenses.WebApi.Endpoints.Expenses;
 
