@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
-using WiSave.Expenses.Projections.Migrations;
+using CoreMigrator = WiSave.Expenses.Core.Migrations.DbMigrator;
+using ProjectionsMigrator = WiSave.Expenses.Projections.Migrations.DbMigrator;
 
 namespace WiSave.Expenses.Console.Operations;
 
@@ -26,7 +27,8 @@ internal sealed class DatabaseMigrationOperations(IConfiguration configuration) 
                 "Postgres connection string was not configured. Set ConnectionStrings__Postgres or appsettings.json.");
         }
 
-        DbMigrator.Run(effectiveConnectionString);
+        CoreMigrator.Run(effectiveConnectionString);
+        ProjectionsMigrator.Run(effectiveConnectionString);
 
         return Task.FromResult("Expenses database migrations applied.");
     }

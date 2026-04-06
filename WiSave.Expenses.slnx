@@ -13,6 +13,7 @@
     <Project Path="src/WiSave.Expenses.Core.Application/WiSave.Expenses.Core.Application.csproj" />
     <Project Path="src/WiSave.Expenses.Core.Domain/WiSave.Expenses.Core.Domain.csproj" />
     <Project Path="src/WiSave.Expenses.Core.Infrastructure/WiSave.Expenses.Core.Infrastructure.csproj" />
+    <Project Path="src/WiSave.Expenses.Core.Migrations/WiSave.Expenses.Core.Migrations.csproj" />
   </Folder>
   <Folder Name="/src/Projections/">
     <Project Path="src/WiSave.Expenses.Projections/WiSave.Expenses.Projections.csproj" />
