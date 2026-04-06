@@ -16,20 +16,19 @@ public sealed class RemoveCategoryLimitHandler(IAggregateRepository<Budget> repo
         try
         {
             var budget = await repository.LoadAsync($"budget-{command.BudgetId}", context.CancellationToken);
-            if (budget is null)
+
+            var guard = CommandGuard.Ok
+                .Require(() => budget is not null, "Budget not found.")
+                .Require(() => budget!.UserId == new UserId(command.UserId), "Access denied.");
+
+            if (guard.HasFailed(out var reason))
             {
                 await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(RemoveCategoryLimit), "Budget not found.", DateTimeOffset.UtcNow));
-                return;
-            }
-            if (budget.UserId != new UserId(command.UserId))
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(RemoveCategoryLimit), "Access denied.", DateTimeOffset.UtcNow));
+                    command.CorrelationId, command.UserId, nameof(RemoveCategoryLimit), reason, DateTimeOffset.UtcNow));
                 return;
             }
 
-            budget.RemoveCategoryLimit(new CategoryId(command.CategoryId));
+            budget!.RemoveCategoryLimit(new CategoryId(command.CategoryId));
             await repository.SaveAsync(budget, context.CancellationToken);
         }
         catch (DomainException ex)
