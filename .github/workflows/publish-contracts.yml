@@ -5,6 +5,9 @@ on:
     branches: [master]
     paths:
       - 'src/WiSave.Expenses.Contracts/**'
+      - '.github/workflows/publish-contracts.yml'
+      - '.github/workflows/pr-contracts-preview.yml'
+      - 'version.json'
 
   workflow_dispatch:
 
@@ -21,6 +24,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4

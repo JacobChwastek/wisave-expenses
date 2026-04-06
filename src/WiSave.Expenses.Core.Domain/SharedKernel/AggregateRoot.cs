@@ -3,11 +3,16 @@ using System.Reflection;
 
 namespace WiSave.Expenses.Core.Domain.SharedKernel;
 
-public abstract class AggregateRoot
+public interface IAggregateStream<TId>
+{
+    static abstract string ToStreamId(TId id);
+}
+
+public abstract class AggregateRoot<TId>
 {
     private static readonly ConcurrentDictionary<(Type Aggregate, Type Event), MethodInfo> MethodCache = new();
 
-    public string Id { get; protected set; } = string.Empty;
+    public TId Id { get; protected set; } = default!;
     public int Version { get; private set; } = -1;
 
     private readonly List<object> _uncommittedEvents = [];

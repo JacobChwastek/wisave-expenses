@@ -1,5 +1,5 @@
 using MassTransit;
-using WiSave.Expenses.Core.Application.Accounting.Handlers;
+using WiSave.Expenses.Core.Application.Funding.Handlers;
 using WiSave.Expenses.Core.Infrastructure;
 using WiSave.Expenses.Core.Infrastructure.EventStore;
 using WiSave.Expenses.Core.Infrastructure.Messaging;
@@ -13,7 +13,7 @@ builder.Services.AddKurrentForwarding(builder.Configuration);
 
 builder.Services.AddMessaging(builder.Configuration, x =>
 {
-    x.AddConsumers(typeof(OpenAccountHandler).Assembly);
+    x.AddConsumers(typeof(OpenFundingAccountHandler).Assembly);
 });
 
 var host = builder.Build();

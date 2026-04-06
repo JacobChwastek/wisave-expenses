@@ -8,7 +8,7 @@ using WiSave.Expenses.Core.Domain.SharedKernel;
 
 namespace WiSave.Expenses.Core.Application.Budgeting.Handlers;
 
-public sealed class CopyBudgetFromPreviousHandler(IAggregateRepository<Budget> repository) : IConsumer<CopyBudgetFromPrevious>
+public sealed class CopyBudgetFromPreviousHandler(IAggregateRepository<Budget, BudgetId> repository) : IConsumer<CopyBudgetFromPrevious>
 {
     public async Task Consume(ConsumeContext<CopyBudgetFromPrevious> context)
     {
@@ -18,8 +18,8 @@ public sealed class CopyBudgetFromPreviousHandler(IAggregateRepository<Budget> r
             var sourceMonth = command.Month == 1 ? 12 : command.Month - 1;
             var sourceYear = command.Month == 1 ? command.Year - 1 : command.Year;
 
-            var sourceStreamId = $"budget-{command.UserId}-{sourceYear}-{sourceMonth:D2}";
-            var sourceBudget = await repository.LoadAsync(sourceStreamId, context.CancellationToken);
+            var sourceBudgetId = new BudgetId($"{command.UserId}-{sourceYear}-{sourceMonth:D2}");
+            var sourceBudget = await repository.LoadAsync(sourceBudgetId, context.CancellationToken);
 
             var guard = CommandGuard.Ok
                 .Require(() => sourceBudget is not null, "No previous month budget found to copy from.")

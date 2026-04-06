@@ -8,7 +8,7 @@ using WiSave.Expenses.Core.Domain.SharedKernel;
 
 namespace WiSave.Expenses.Core.Application.Budgeting.Handlers;
 
-public sealed class CreateBudgetHandler(IAggregateRepository<Budget> repository) : IConsumer<CreateBudget>
+public sealed class CreateBudgetHandler(IAggregateRepository<Budget, BudgetId> repository) : IConsumer<CreateBudget>
 {
     public async Task Consume(ConsumeContext<CreateBudget> context)
     {

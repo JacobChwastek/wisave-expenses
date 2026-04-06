@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <PackageId>WiSave.Expenses.Contracts</PackageId>
-    <Version>0.1.0</Version>
     <Description>Shared commands, integration events, and models for the WiSave Expenses microservice</Description>
     <Authors>JacobChwastek</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -12,6 +11,10 @@
 
   <ItemGroup>
     <PackageReference Include="MassTransit.Abstractions" Version="8.5.8" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.9.50">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
   </ItemGroup>
 
 </Project>

@@ -24,7 +24,8 @@ builder.Services.AddScoped<ICurrentUser, HeaderCurrentUser>();
 builder.Services.AddScoped<PermissionContext>();
 
 // Read repositories
-builder.Services.AddScoped<AccountReadRepository>();
+builder.Services.AddScoped<FundingAccountReadRepository>();
+builder.Services.AddScoped<CreditCardAccountReadRepository>();
 builder.Services.AddScoped<ExpenseReadRepository>();
 builder.Services.AddScoped<BudgetReadRepository>();
 
@@ -34,7 +35,8 @@ builder.Services.AddMessaging(builder.Configuration);
 var app = builder.Build();
 
 // Endpoints
-app.MapAccountEndpoints();
+app.MapFundingAccountEndpoints();
+app.MapCreditCardAccountEndpoints();
 app.MapExpenseEndpoints();
 app.MapBudgetEndpoints();
 app.MapCategoryEndpoints();

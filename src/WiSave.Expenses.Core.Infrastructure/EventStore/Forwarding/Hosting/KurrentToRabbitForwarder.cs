@@ -25,10 +25,33 @@ public sealed class KurrentToRabbitForwarder(
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await bootstrapper.EnsureCreatedAsync(stoppingToken);
-
         var delay = TimeSpan.FromSeconds(Math.Max(1, options.Value.ReconnectDelaySeconds));
         var maxDelay = TimeSpan.FromSeconds(Math.Max(options.Value.ReconnectDelaySeconds, options.Value.MaxReconnectDelaySeconds));
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await bootstrapper.EnsureCreatedAsync(stoppingToken);
+                break;
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                return;
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(
+                    ex,
+                    "KurrentDB not available yet. Retrying subscription bootstrap in {DelaySeconds}s",
+                    delay.TotalSeconds);
+
+                await Task.Delay(delay, stoppingToken);
+                delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, maxDelay.TotalSeconds));
+            }
+        }
+
+        delay = TimeSpan.FromSeconds(Math.Max(1, options.Value.ReconnectDelaySeconds));
 
         while (!stoppingToken.IsCancellationRequested)
         {

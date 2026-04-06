@@ -1,4 +1,5 @@
 using WiSave.Expenses.Core.Infrastructure.EventStore;
+using WiSave.Expenses.Contracts.Events.CreditCards;
 
 namespace WiSave.Expenses.Worker.Domain.Tests.EventStore;
 
@@ -9,8 +10,8 @@ public class ContractEventTypeRegistryTests
     {
         var sut = new ContractEventTypeRegistry();
 
-        var type = sut.Resolve("AccountOpened");
+        var type = sut.Resolve(nameof(CreditCardStatementIssued));
 
-        Assert.Equal("WiSave.Expenses.Contracts.Events.Accounts.AccountOpened", type?.FullName);
+        Assert.Equal(typeof(CreditCardStatementIssued), type);
     }
 }

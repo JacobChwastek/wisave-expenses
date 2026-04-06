@@ -22,6 +22,7 @@
     <Project Path="src/WiSave.Expenses.Projections.Migrations/WiSave.Expenses.Projections.Migrations.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/WiSave.Expenses.Console.Tests/WiSave.Expenses.Console.Tests.csproj" />
     <Project Path="tests/WiSave.Expenses.Contracts.Tests/WiSave.Expenses.Contracts.Tests.csproj" />
     <Project Path="tests/WiSave.Expenses.Core.Application.Tests/WiSave.Expenses.Core.Application.Tests.csproj" />
     <Project Path="tests/WiSave.Expenses.Core.Domain.Tests/WiSave.Expenses.Core.Domain.Tests.csproj" />

@@ -8,14 +8,14 @@ using WiSave.Expenses.Core.Domain.SharedKernel;
 
 namespace WiSave.Expenses.Core.Application.Budgeting.Handlers;
 
-public sealed class SetOverallLimitHandler(IAggregateRepository<Budget> repository) : IConsumer<SetOverallLimit>
+public sealed class SetOverallLimitHandler(IAggregateRepository<Budget, BudgetId> repository) : IConsumer<SetOverallLimit>
 {
     public async Task Consume(ConsumeContext<SetOverallLimit> context)
     {
         var command = context.Message;
         try
         {
-            var budget = await repository.LoadAsync($"budget-{command.BudgetId}", context.CancellationToken);
+            var budget = await repository.LoadAsync(new BudgetId(command.BudgetId), context.CancellationToken);
 
             var guard = CommandGuard.Ok
                 .Require(() => budget is not null, "Budget not found.")

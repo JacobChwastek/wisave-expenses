@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WiSave.Expenses.Contracts.Events.Expenses;
 using WiSave.Expenses.Contracts.Models;
-using WiSave.Expenses.Projections.EventHandlers;
 
 namespace WiSave.Expenses.Projections.Tests.EventHandlers;
 
@@ -10,10 +9,9 @@ public class ExpenseUpdatedRecalculationTests
     [Fact]
     public async Task ExpenseUpdated_recategorize_moves_spend_between_categories_without_amount_change()
     {
-        await using var db = TestDbContextFactory.Create();
-        var handler = new ExpenseEventHandler(db);
+        await using var harness = await ProjectionTestHarness.StartAsync();
 
-        await handler.HandleAsync(
+        await harness.PublishAsync(
             new ExpenseRecorded(
                 ExpenseId: "exp-1",
                 UserId: "user-1",
@@ -26,11 +24,10 @@ public class ExpenseUpdatedRecalculationTests
                 Description: "Weekly shop",
                 Recurring: false,
                 Metadata: null,
-                Timestamp: DateTimeOffset.UtcNow),
-            Guid.NewGuid(),
-            CancellationToken.None);
+                Timestamp: DateTimeOffset.UtcNow));
+        await harness.EventuallyAsync(async db => Assert.Equal(1, await db.Expenses.CountAsync()));
 
-        await handler.HandleAsync(
+        await harness.PublishAsync(
             new ExpenseUpdated(
                 ExpenseId: "exp-1",
                 UserId: "user-1",
@@ -42,24 +39,24 @@ public class ExpenseUpdatedRecalculationTests
                 SubcategoryId: null,
                 Recurring: null,
                 Metadata: null,
-                Timestamp: DateTimeOffset.UtcNow),
-            Guid.NewGuid(),
-            CancellationToken.None);
+                Timestamp: DateTimeOffset.UtcNow));
 
-        var groceries = await db.SpendingSummaries.SingleAsync(x => x.CategoryId == "groceries");
-        var dining = await db.SpendingSummaries.SingleAsync(x => x.CategoryId == "dining");
+        await harness.EventuallyAsync(async db =>
+        {
+            var groceries = await db.SpendingSummaries.SingleAsync(x => x.CategoryId == "groceries");
+            var dining = await db.SpendingSummaries.SingleAsync(x => x.CategoryId == "dining");
 
-        Assert.Equal(0m, groceries.TotalSpent);
-        Assert.Equal(100m, dining.TotalSpent);
+            Assert.Equal(0m, groceries.TotalSpent);
+            Assert.Equal(100m, dining.TotalSpent);
+        });
     }
 
     [Fact]
     public async Task ExpenseUpdated_date_change_moves_spend_between_months_without_amount_change()
     {
-        await using var db = TestDbContextFactory.Create();
-        var handler = new ExpenseEventHandler(db);
+        await using var harness = await ProjectionTestHarness.StartAsync();
 
-        await handler.HandleAsync(
+        await harness.PublishAsync(
             new ExpenseRecorded(
                 ExpenseId: "exp-2",
                 UserId: "user-1",
@@ -72,11 +69,10 @@ public class ExpenseUpdatedRecalculationTests
                 Description: "Coffee beans",
                 Recurring: false,
                 Metadata: null,
-                Timestamp: DateTimeOffset.UtcNow),
-            Guid.NewGuid(),
-            CancellationToken.None);
+                Timestamp: DateTimeOffset.UtcNow));
+        await harness.EventuallyAsync(async db => Assert.Equal(1, await db.Expenses.CountAsync()));
 
-        await handler.HandleAsync(
+        await harness.PublishAsync(
             new ExpenseUpdated(
                 ExpenseId: "exp-2",
                 UserId: "user-1",
@@ -88,14 +84,15 @@ public class ExpenseUpdatedRecalculationTests
                 SubcategoryId: null,
                 Recurring: null,
                 Metadata: null,
-                Timestamp: DateTimeOffset.UtcNow),
-            Guid.NewGuid(),
-            CancellationToken.None);
+                Timestamp: DateTimeOffset.UtcNow));
 
-        var march = await db.MonthlyStats.SingleAsync(x => x.Month == 3 && x.Year == 2026);
-        var april = await db.MonthlyStats.SingleAsync(x => x.Month == 4 && x.Year == 2026);
+        await harness.EventuallyAsync(async db =>
+        {
+            var march = await db.MonthlyStats.SingleAsync(x => x.Month == 3 && x.Year == 2026);
+            var april = await db.MonthlyStats.SingleAsync(x => x.Month == 4 && x.Year == 2026);
 
-        Assert.Equal(0m, march.TotalSpent);
-        Assert.Equal(80m, april.TotalSpent);
+            Assert.Equal(0m, march.TotalSpent);
+            Assert.Equal(80m, april.TotalSpent);
+        });
     }
 }

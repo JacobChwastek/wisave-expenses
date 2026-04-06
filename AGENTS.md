@@ -78,6 +78,61 @@ dotnet run --project src/WiSave.Expenses.Worker.Projections
 - Avoid shipping placeholder or comment-only DbUp scripts. DbUp will still journal an executed script by filename, so if a no-op script has already been applied, any later real change must go into a new numbered script instead of reusing that filename.
 - For local console verification, the expenses Postgres runs on host port `5433` via `docker compose`.
 
+## Wiki Maintenance
+
+This repository has a GitHub Wiki mounted as a Git submodule at:
+
+```text
+wiki/
+```
+
+Treat `wiki/` as the documentation workspace for GitHub Wiki pages.
+
+When the user asks to analyze an area of the application and improve, refresh, or create wiki pages:
+
+1. Inspect the relevant source code first.
+2. Inspect related tests, configuration, README files, existing docs, and existing wiki pages.
+3. Identify behavior from code, tests, and configuration instead of assumptions.
+4. Create or update Markdown pages inside `wiki/`.
+5. Keep pages practical and developer-oriented.
+6. Update `Home.md` and `_Sidebar.md` when adding, renaming, or removing important pages.
+7. Add relative links between wiki pages where useful.
+8. Add source references to relevant repository files using paths relative to the repository root, for example:
+   - `src/WiSave.Expenses.Worker.Domain/...`
+   - `tests/WiSave.Expenses.Worker.Domain.Tests/...`
+9. Do not expose secrets, connection strings, tokens, private credentials, or production-only sensitive values in the wiki.
+
+Before and after modifying wiki files:
+
+- Check wiki status with `git -C wiki status`.
+- If `git -C wiki rev-parse --show-toplevel` resolves to the parent repository instead of `wiki/`, the wiki submodule is not initialized; stop and ask the developer to initialize/update the submodule before editing wiki pages.
+- Review wiki diff with `git -C wiki diff`.
+- Review parent repository status with `git status`.
+- Remember that changes inside `wiki/` belong to the wiki repository.
+- The parent repository may also show the submodule pointer as changed after commits are made inside the wiki.
+- Do not commit either the wiki repository or the parent repository unless explicitly asked.
+
+Before every commit:
+
+- Check whether local agent planning docs exist under ignored `docs/superpowers/`.
+- Decide whether any local superpowers docs contain durable architecture, operations, troubleshooting, migration, or business-decision content that belongs in `wiki/`.
+- If yes, copy the durable content into the appropriate wiki page first, validate `git -C wiki diff`, and commit/push the wiki repository before committing the parent repository.
+- If no, leave `docs/superpowers/` untracked and mention that no wiki promotion was needed.
+
+Use this structure for substantial wiki pages:
+
+```md
+# Page Title
+## Purpose
+## When to use / when it runs
+## Main flow
+## Key components
+## Configuration
+## Failure modes and troubleshooting
+## Source map
+## Open questions
+```
+
 ## Agent Handoff
 
 When finishing work:
