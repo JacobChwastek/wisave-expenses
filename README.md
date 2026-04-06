@@ -58,6 +58,16 @@ docker compose up --build
 
 RabbitMQ is hosted by Portal (`localhost:5672`).
 
+## Contracts Package Versioning
+
+`WiSave.Expenses.Contracts` uses `Nerdbank.GitVersioning` for package versions.
+
+- Pull requests targeting `master` publish preview packages to GitHub Packages.
+- Pushes to `master` publish stable packages to the same feed.
+- The package version is not hardcoded in the contracts `.csproj`; it is derived from git history and `version.json`.
+
+The current contracts version line starts at `1.0`.
+
 ## Design Docs
 
 - [Microservice Design Spec](../wisave-documentation/specs/2026-03-28-expenses-microservice-design.md)
