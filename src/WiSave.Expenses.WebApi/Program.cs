@@ -1,50 +1,31 @@
-using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using WiSave.Expenses.Core.Infrastructure.Identity;
+using WiSave.Expenses.Core.Infrastructure.Messaging;
 using WiSave.Expenses.Core.Infrastructure.Postgres;
 using WiSave.Expenses.Projections;
-using WiSave.Expenses.Projections.Queries;
+using WiSave.Expenses.Projections.Repositories;
 using WiSave.Expenses.WebApi.Endpoints;
-using WiSave.Expenses.WebApi.Endpoints.Categories;
-using WiSave.Expenses.WebApi.Endpoints.Expenses;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var postgresConfig = builder.Configuration.GetConnectionString("Config")
-    ?? "Host=localhost;Port=5433;Database=wisave_expenses;Username=wisave;Password=wisave_dev";
-var postgresProjections = builder.Configuration.GetConnectionString("Projections")
-    ?? postgresConfig;
+var postgresCs = builder.Configuration.GetConnectionString("Postgres")!;
 
-// Config DB (categories)
-builder.Services.AddDbContext<ExpensesDbContext>(opts => opts.UseNpgsql(postgresConfig));
+// Config DB (categories) — schema: config
+builder.Services.AddDbContext<ExpensesDbContext>(opts => opts.UseNpgsql(postgresCs));
 
-// Projections DB (read models)
-builder.Services.AddDbContext<ProjectionsDbContext>(opts => opts.UseNpgsql(postgresProjections));
+// Projections DB (read models) — schema: projections
+builder.Services.AddDbContext<ProjectionsDbContext>(opts => opts.UseNpgsql(postgresCs));
 
 // Identity
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HeaderCurrentUser>();
 
-// Query services
-builder.Services.AddScoped<AccountQueries>();
-builder.Services.AddScoped<ExpenseQueries>();
-builder.Services.AddScoped<BudgetQueries>();
+// Read repositories
+builder.Services.AddScoped<AccountReadRepository>();
+builder.Services.AddScoped<ExpenseReadRepository>();
+builder.Services.AddScoped<BudgetReadRepository>();
 
-// MassTransit (publish only — no consumers in WebApi)
-builder.Services.AddMassTransit(x =>
-{
-    x.UsingRabbitMq((context, cfg) =>
-    {
-        var host = builder.Configuration["RabbitMq:Host"] ?? "localhost";
-        var vhost = builder.Configuration["RabbitMq:VirtualHost"] ?? "expenses";
-
-        cfg.Host(host, vhost, h =>
-        {
-            h.Username(builder.Configuration["RabbitMq:Username"] ?? "guest");
-            h.Password(builder.Configuration["RabbitMq:Password"] ?? "guest");
-        });
-    });
-});
+builder.Services.AddMessaging(builder.Configuration);
 
 var app = builder.Build();
 

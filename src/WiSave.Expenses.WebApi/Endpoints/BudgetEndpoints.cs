@@ -2,7 +2,8 @@ using MassTransit;
 using WiSave.Expenses.Contracts.Commands.Budgets;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Infrastructure.Identity;
-using WiSave.Expenses.Projections.Queries;
+using WiSave.Expenses.Projections.Repositories;
+using WiSave.Expenses.WebApi.Requests.Budgets;
 
 namespace WiSave.Expenses.WebApi.Endpoints;
 
@@ -10,68 +11,80 @@ public static class BudgetEndpoints
 {
     public static void MapBudgetEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/budgets").WithTags("Budgets");
+        var group = app.MapGroup("/expenses/budgets").WithTags("Budgets");
 
-        // Commands
-        group.MapPost("/", async (IPublishEndpoint bus, ICurrentUser user, CreateBudgetRequest request) =>
-        {
-            var correlationId = Guid.NewGuid();
-            await bus.Publish(new CreateBudget(
-                correlationId, user.UserId, request.Month, request.Year,
-                request.TotalLimit, request.Currency, request.Recurring));
+        group.MapPost("/", Create);
+        group.MapPost("/copy", Copy);
+        group.MapPut("/{id}/limit", SetLimit);
+        group.MapPut("/{id}/categories/{categoryId}", SetCategoryLimit);
+        group.MapDelete("/{id}/categories/{categoryId}", RemoveCategoryLimit);
+        group.MapGet("/", GetByMonth);
+        group.MapGet("/summary", GetSummary);
+        group.MapGet("/monthly-stats", GetMonthlyStats);
+    }
 
-            return Results.Accepted(value: new { correlationId });
-        });
+    private static async Task<IResult> Create(
+        IPublishEndpoint bus, ICurrentUser user, CreateBudgetRequest request)
+    {
+        var correlationId = Guid.CreateVersion7();
+        await bus.Publish(new CreateBudget(
+            correlationId, user.UserId, request.Month, request.Year,
+            request.TotalLimit, request.Currency, request.Recurring));
 
-        group.MapPost("/copy", async (IPublishEndpoint bus, ICurrentUser user, CopyBudgetRequest request) =>
-        {
-            var correlationId = Guid.NewGuid();
-            await bus.Publish(new CopyBudgetFromPrevious(correlationId, user.UserId, request.Month, request.Year));
-            return Results.Accepted(value: new { correlationId });
-        });
+        return Results.Accepted(value: new { correlationId });
+    }
 
-        group.MapPut("/{id}/limit", async (string id, IPublishEndpoint bus, ICurrentUser user, SetLimitRequest request) =>
-        {
-            var correlationId = Guid.NewGuid();
-            await bus.Publish(new SetOverallLimit(correlationId, user.UserId, id, request.TotalLimit));
-            return Results.Accepted(value: new { correlationId });
-        });
+    private static async Task<IResult> Copy(
+        IPublishEndpoint bus, ICurrentUser user, CopyBudgetRequest request)
+    {
+        var correlationId = Guid.CreateVersion7();
+        await bus.Publish(new CopyBudgetFromPrevious(correlationId, user.UserId, request.Month, request.Year));
+        return Results.Accepted(value: new { correlationId });
+    }
 
-        group.MapPut("/{id}/categories/{categoryId}", async (
-            string id, string categoryId, IPublishEndpoint bus, ICurrentUser user, SetCategoryLimitRequest request) =>
-        {
-            var correlationId = Guid.NewGuid();
-            await bus.Publish(new SetCategoryLimit(correlationId, user.UserId, id, categoryId, request.Limit));
-            return Results.Accepted(value: new { correlationId });
-        });
+    private static async Task<IResult> SetLimit(
+        string id, IPublishEndpoint bus, ICurrentUser user, SetLimitRequest request)
+    {
+        var correlationId = Guid.CreateVersion7();
+        await bus.Publish(new SetOverallLimit(correlationId, user.UserId, id, request.TotalLimit));
+        return Results.Accepted(value: new { correlationId });
+    }
 
-        group.MapDelete("/{id}/categories/{categoryId}", async (
-            string id, string categoryId, IPublishEndpoint bus, ICurrentUser user) =>
-        {
-            var correlationId = Guid.NewGuid();
-            await bus.Publish(new RemoveCategoryLimit(correlationId, user.UserId, id, categoryId));
-            return Results.Accepted(value: new { correlationId });
-        });
+    private static async Task<IResult> SetCategoryLimit(
+        string id, string categoryId, IPublishEndpoint bus, ICurrentUser user, SetCategoryLimitRequest request)
+    {
+        var correlationId = Guid.CreateVersion7();
+        await bus.Publish(new SetCategoryLimit(correlationId, user.UserId, id, categoryId, request.Limit));
+        return Results.Accepted(value: new { correlationId });
+    }
 
-        // Queries
-        group.MapGet("/", async (int month, int year, ICurrentUser user, BudgetQueries queries) =>
-        {
-            var budget = await queries.GetByMonthAsync(user.UserId, month, year);
-            if (budget is null) return Results.NotFound();
+    private static async Task<IResult> RemoveCategoryLimit(
+        string id, string categoryId, IPublishEndpoint bus, ICurrentUser user)
+    {
+        var correlationId = Guid.CreateVersion7();
+        await bus.Publish(new Contracts.Commands.Budgets.RemoveCategoryLimit(correlationId, user.UserId, id, categoryId));
+        return Results.Accepted(value: new { correlationId });
+    }
 
-            var categoryLimits = await queries.GetCategoryLimitsAsync(budget.Id);
-            return Results.Ok(new { budget, categoryLimits });
-        });
+    private static async Task<IResult> GetByMonth(
+        int month, int year, ICurrentUser user, BudgetReadRepository repository)
+    {
+        var budget = await repository.GetByMonthAsync(user.UserId, month, year);
+        if (budget is null) return Results.NotFound();
 
-        group.MapGet("/summary", async (int month, int year, ICurrentUser user, BudgetQueries queries) =>
-            Results.Ok(await queries.GetSpendingSummaryAsync(user.UserId, month, year)));
+        var categoryLimits = await repository.GetCategoryLimitsAsync(budget.Id);
+        return Results.Ok(new { budget, categoryLimits });
+    }
 
-        group.MapGet("/monthly-stats", async (int year, ICurrentUser user, BudgetQueries queries) =>
-            Results.Ok(await queries.GetMonthlyStatsAsync(user.UserId, year)));
+    private static async Task<IResult> GetSummary(
+        int month, int year, ICurrentUser user, BudgetReadRepository repository)
+    {
+        return Results.Ok(await repository.GetSpendingSummaryAsync(user.UserId, month, year));
+    }
+
+    private static async Task<IResult> GetMonthlyStats(
+        int year, ICurrentUser user, BudgetReadRepository repository)
+    {
+        return Results.Ok(await repository.GetMonthlyStatsAsync(user.UserId, year));
     }
 }
-
-public sealed record CreateBudgetRequest(int Month, int Year, decimal TotalLimit, Currency Currency, bool Recurring = true);
-public sealed record CopyBudgetRequest(int Month, int Year);
-public sealed record SetLimitRequest(decimal TotalLimit);
-public sealed record SetCategoryLimitRequest(decimal Limit);

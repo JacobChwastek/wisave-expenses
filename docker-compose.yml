@@ -1,5 +1,5 @@
 services:
-  webapi:
+  wisave-expenses-webapi:
     build:
       context: .
       dockerfile: Dockerfile.WebApi
@@ -8,8 +8,7 @@ services:
     depends_on:
       - postgres
     environment:
-      - ConnectionStrings__Projections=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
-      - ConnectionStrings__Config=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
+      - ConnectionStrings__Postgres=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
       - RabbitMq__Host=host.docker.internal
       - RabbitMq__VirtualHost=expenses
 
@@ -21,7 +20,7 @@ services:
       - kurrentdb
       - postgres
     environment:
-      - ConnectionStrings__Config=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
+      - ConnectionStrings__Postgres=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
       - EventStore__ConnectionString=esdb://kurrentdb:2113?tls=false
       - RabbitMq__Host=host.docker.internal
       - RabbitMq__VirtualHost=expenses
@@ -31,11 +30,11 @@ services:
       context: .
       dockerfile: Dockerfile.Worker.Projections
     depends_on:
-      - kurrentdb
       - postgres
     environment:
-      - ConnectionStrings__Projections=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
-      - EventStore__ConnectionString=esdb://kurrentdb:2113?tls=false
+      - ConnectionStrings__Postgres=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
+      - RabbitMq__Host=host.docker.internal
+      - RabbitMq__VirtualHost=expenses
 
   kurrentdb:
     image: eventstore/eventstore:24.10
@@ -58,7 +57,17 @@ services:
       - POSTGRES_PASSWORD=wisave_dev
     volumes:
       - expenses-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wisave -d wisave_expenses"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 volumes:
   kurrentdb-data:
   expenses-db:
+
+networks:
+  default:
+    external: true
+    name: wisave-net
