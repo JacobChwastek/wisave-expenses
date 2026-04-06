@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="EventStore.Client.Grpc.Streams" Version="23.3.9" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="9.1.0" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.5">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.4">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
@@ -24,6 +24,10 @@
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Postgres\Migrations\" />
   </ItemGroup>
 
 </Project>
