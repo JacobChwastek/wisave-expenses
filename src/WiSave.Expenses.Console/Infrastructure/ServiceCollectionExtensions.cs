@@ -22,6 +22,8 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IScopedDatabaseMigrator, ProjectionsDatabaseMigrator>();
         services.AddSingleton<IDatabaseMigrationOperations, DatabaseMigrationOperations>();
         services.AddSingleton<IEventStoreResetOperations, EventStoreResetOperations>();
+        services.AddSingleton<IProjectionClearOperations, ProjectionClearOperations>();
+        services.AddSingleton<IProjectionStorageResetClient, NpgsqlProjectionStorageResetClient>();
 
         RegisterCommands(services, typeof(ServiceCollectionExtensions).Assembly);
 

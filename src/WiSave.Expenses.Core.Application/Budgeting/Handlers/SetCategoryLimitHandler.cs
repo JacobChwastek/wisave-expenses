@@ -9,7 +9,7 @@ using WiSave.Expenses.Core.Domain.SharedKernel;
 namespace WiSave.Expenses.Core.Application.Budgeting.Handlers;
 
 public sealed class SetCategoryLimitHandler(
-    IAggregateRepository<Budget> repository,
+    IAggregateRepository<Budget, BudgetId> repository,
     ICategoryRepository categoryRepository) : IConsumer<SetCategoryLimit>
 {
     public async Task Consume(ConsumeContext<SetCategoryLimit> context)
@@ -18,7 +18,7 @@ public sealed class SetCategoryLimitHandler(
         var ct = context.CancellationToken;
         try
         {
-            var budget = await repository.LoadAsync($"budget-{command.BudgetId}", ct);
+            var budget = await repository.LoadAsync(new BudgetId(command.BudgetId), ct);
 
             var guard = await CommandGuard.Ok
                 .Require(() => budget is not null, "Budget not found.")
@@ -28,7 +28,7 @@ public sealed class SetCategoryLimitHandler(
             if (guard.HasFailed(out var reason))
             {
                 await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(SetCategoryLimit), reason, DateTimeOffset.UtcNow));
+                    command.CorrelationId, command.UserId, nameof(SetCategoryLimit), reason, DateTimeOffset.UtcNow), ct);
                 return;
             }
 
@@ -38,7 +38,7 @@ public sealed class SetCategoryLimitHandler(
         catch (DomainException ex)
         {
             await context.Publish(new CommandFailed(
-                command.CorrelationId, command.UserId, nameof(SetCategoryLimit), ex.Message, DateTimeOffset.UtcNow));
+                command.CorrelationId, command.UserId, nameof(SetCategoryLimit), ex.Message, DateTimeOffset.UtcNow), ct);
         }
     }
 }

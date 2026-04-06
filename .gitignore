@@ -28,6 +28,10 @@ appsettings.Local.json
 .DS_Store
 Thumbs.db
 
+## Local agent artifacts
+.superpowers/
+docs/superpowers/
+
 ## Graphify
 graphify-out/
 .graphify_*

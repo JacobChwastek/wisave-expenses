@@ -6,10 +6,34 @@ public sealed record UserId(string Value)
     public static explicit operator UserId(string value) => new(value);
 }
 
-public sealed record AccountId(string Value)
+public sealed record FundingAccountId(string Value)
 {
-    public static explicit operator string(AccountId id) => id.Value;
-    public static explicit operator AccountId(string value) => new(value);
+    public static explicit operator string(FundingAccountId id) => id.Value;
+    public static explicit operator FundingAccountId(string value) => new(value);
+}
+
+public sealed record PaymentInstrumentId(string Value)
+{
+    public static explicit operator string(PaymentInstrumentId id) => id.Value;
+    public static explicit operator PaymentInstrumentId(string value) => new(value);
+}
+
+public sealed record CreditCardAccountId(string Value)
+{
+    public static explicit operator string(CreditCardAccountId id) => id.Value;
+    public static explicit operator CreditCardAccountId(string value) => new(value);
+}
+
+public sealed record CreditCardStatementId(string Value)
+{
+    public static explicit operator string(CreditCardStatementId id) => id.Value;
+    public static explicit operator CreditCardStatementId(string value) => new(value);
+}
+
+public sealed record TransferId(string Value)
+{
+    public static explicit operator string(TransferId id) => id.Value;
+    public static explicit operator TransferId(string value) => new(value);
 }
 
 public sealed record ExpenseId(string Value)

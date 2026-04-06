@@ -4,7 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using WiSave.Expenses.Contracts.Events.Accounts;
+using WiSave.Expenses.Contracts.Events.FundingAccounts;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Infrastructure.EventStore;
 using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Configuration;
@@ -23,7 +23,7 @@ public class KurrentToRabbitForwarderTests
         services.AddOptions<KurrentForwarderOptions>().Configure(options =>
         {
             options.GroupName = "expenses-forwarder";
-            options.StreamPrefixes = ["account-", "expense-", "budget-"];
+            options.StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"];
         });
         services.AddSingleton<IKurrentPersistentSubscriptionClient, FakePersistentSubscriptionClient>();
         services.AddSingleton<KurrentSubscriptionBootstrapper>();
@@ -49,7 +49,7 @@ public class KurrentToRabbitForwarderTests
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
-            StreamPrefixes = ["account-", "expense-", "budget-"],
+            StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"],
         });
 
         var sut = new KurrentToRabbitForwarder(
@@ -64,32 +64,28 @@ public class KurrentToRabbitForwarderTests
             NullLogger<KurrentToRabbitForwarder>.Instance);
 
         var actions = new FakeSubscriptionActions();
-        var message = new AccountOpened(
-            AccountId: "acc-1",
+        var message = new FundingAccountOpened(
+            FundingAccountId: "fund-1",
             UserId: "user-1",
             Name: "Checking",
-            Type: AccountType.BankAccount,
             Currency: Currency.USD,
-            Balance: 100m,
-            LinkedBankAccountId: null,
-            CreditLimit: null,
-            BillingCycleDay: null,
-            Color: null,
-            LastFourDigits: null,
+            Kind: FundingAccountKind.BankAccount,
+            OpeningBalance: 100m,
+            Color: "#3b82f6",
             Timestamp: DateTimeOffset.UtcNow);
 
         var handled = await sut.HandleEventAsync(
             new KurrentCommittedEvent(
                 EventId: Guid.NewGuid(),
-                EventType: "AccountOpened",
-                StreamId: "account-acc-1",
+                EventType: nameof(FundingAccountOpened),
+                StreamId: "funding-account-fund-1",
                 Data: JsonSerializer.SerializeToUtf8Bytes(message),
                 Actions: actions),
             CancellationToken.None);
 
         Assert.True(handled);
         Assert.Single(publishEndpoint.Published);
-        Assert.IsType<AccountOpened>(publishEndpoint.Published[0]);
+        Assert.IsType<FundingAccountOpened>(publishEndpoint.Published[0]);
         Assert.Equal(1, actions.AckCalls);
         Assert.Equal(0, actions.RetryCalls);
         Assert.Equal(0, actions.SkipCalls);
@@ -103,7 +99,7 @@ public class KurrentToRabbitForwarderTests
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
-            StreamPrefixes = ["account-", "expense-", "budget-"],
+            StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"],
         });
 
         var sut = new KurrentToRabbitForwarder(
@@ -123,7 +119,7 @@ public class KurrentToRabbitForwarderTests
             new KurrentCommittedEvent(
                 EventId: Guid.NewGuid(),
                 EventType: "UnknownEvent",
-                StreamId: "account-acc-1",
+                StreamId: "funding-account-fund-1",
                 Data: "{}"u8.ToArray(),
                 Actions: actions),
             CancellationToken.None);
@@ -143,7 +139,7 @@ public class KurrentToRabbitForwarderTests
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
-            StreamPrefixes = ["account-", "expense-", "budget-"],
+            StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"],
         });
 
         var sut = new KurrentToRabbitForwarder(
@@ -162,7 +158,7 @@ public class KurrentToRabbitForwarderTests
         var handled = await sut.HandleEventAsync(
             new KurrentCommittedEvent(
                 EventId: Guid.NewGuid(),
-                EventType: "AccountOpened",
+                EventType: nameof(FundingAccountOpened),
                 StreamId: "other-service-1",
                 Data: "{}"u8.ToArray(),
                 Actions: actions),
@@ -181,7 +177,7 @@ public class KurrentToRabbitForwarderTests
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
-            StreamPrefixes = ["account-", "expense-", "budget-"],
+            StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"],
         });
 
         var sut = new KurrentToRabbitForwarder(
@@ -196,25 +192,21 @@ public class KurrentToRabbitForwarderTests
             NullLogger<KurrentToRabbitForwarder>.Instance);
 
         var actions = new FakeSubscriptionActions();
-        var message = new AccountOpened(
-            AccountId: "acc-1",
+        var message = new FundingAccountOpened(
+            FundingAccountId: "fund-1",
             UserId: "user-1",
             Name: "Checking",
-            Type: AccountType.BankAccount,
             Currency: Currency.USD,
-            Balance: 100m,
-            LinkedBankAccountId: null,
-            CreditLimit: null,
-            BillingCycleDay: null,
-            Color: null,
-            LastFourDigits: null,
+            Kind: FundingAccountKind.BankAccount,
+            OpeningBalance: 100m,
+            Color: "#3b82f6",
             Timestamp: DateTimeOffset.UtcNow);
 
         var handled = await sut.HandleEventAsync(
             new KurrentCommittedEvent(
                 EventId: Guid.NewGuid(),
-                EventType: "AccountOpened",
-                StreamId: "account-acc-1",
+                EventType: nameof(FundingAccountOpened),
+                StreamId: "funding-account-fund-1",
                 Data: JsonSerializer.SerializeToUtf8Bytes(message),
                 Actions: actions),
             CancellationToken.None);

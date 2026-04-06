@@ -17,7 +17,7 @@ public class BudgetTests
     {
         var budget = Budget.Create(Id, User, 3, 2026, 8000m, Currency.PLN);
 
-        Assert.Equal("bud-1", budget.Id);
+        Assert.Equal(Id, budget.Id);
         Assert.Equal(3, budget.Period.Month);
         Assert.Equal(2026, budget.Period.Year);
         Assert.Equal(8000m, budget.TotalLimit);
@@ -26,6 +26,12 @@ public class BudgetTests
         Assert.Empty(budget.CategoryBudgets);
         Assert.Single(budget.GetUncommittedEvents());
         Assert.IsType<BudgetCreated>(budget.GetUncommittedEvents()[0]);
+    }
+
+    [Fact]
+    public void Given_budget_id_When_building_stream_id_Then_budget_stream_prefix_is_used()
+    {
+        Assert.Equal("budget-bud-1", Budget.ToStreamId(Id));
     }
 
     [Fact]
@@ -119,7 +125,7 @@ public class BudgetTests
         var budget = Budget.CopyFromPrevious(
             new BudgetId("bud-2"), User, 4, 2026, 3, 2026, Currency.PLN, 8000m, true, sourceLimits);
 
-        Assert.Equal("bud-2", budget.Id);
+        Assert.Equal(new BudgetId("bud-2"), budget.Id);
         Assert.Equal(4, budget.Period.Month);
         Assert.Equal(8000m, budget.TotalLimit);
         Assert.Equal(2, budget.CategoryBudgets.Count);
@@ -137,7 +143,7 @@ public class BudgetTests
         var replayed = new Budget();
         replayed.ReplayEvents(events);
 
-        Assert.Equal("bud-2", replayed.Id);
+        Assert.Equal(new BudgetId("bud-2"), replayed.Id);
         Assert.Equal(4, replayed.Period.Month);
         Assert.Equal(8000m, replayed.TotalLimit);
         Assert.Equal(Currency.PLN, replayed.Currency);

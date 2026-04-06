@@ -5,7 +5,7 @@ using WiSave.Expenses.Core.Domain.SharedKernel.ValueObjects;
 
 namespace WiSave.Expenses.Core.Domain.Budgeting;
 
-public sealed class Budget : AggregateRoot
+public sealed class Budget : AggregateRoot<BudgetId>, IAggregateStream<BudgetId>
 {
     public UserId UserId { get; private set; } = null!;
     public BudgetPeriod Period { get; private set; } = null!;
@@ -15,6 +15,8 @@ public sealed class Budget : AggregateRoot
 
     private readonly List<CategoryBudget> _categoryBudgets = [];
     public IReadOnlyList<CategoryBudget> CategoryBudgets => _categoryBudgets.AsReadOnly();
+
+    public static string ToStreamId(BudgetId id) => $"budget-{id.Value}";
 
     public Budget() { }
 
@@ -51,13 +53,13 @@ public sealed class Budget : AggregateRoot
         if (totalLimit < 0)
             throw new DomainException("Total limit must be >= 0.");
 
-        RaiseEvent(new OverallLimitSet(Id, UserId.Value, totalLimit, DateTimeOffset.UtcNow));
+        RaiseEvent(new OverallLimitSet(Id.Value, UserId.Value, totalLimit, DateTimeOffset.UtcNow));
     }
 
     public void SetCategoryLimit(CategoryId categoryId, decimal limit)
     {
         _ = new CategoryBudget(categoryId.Value, limit);
-        RaiseEvent(new CategoryLimitSet(Id, UserId.Value, categoryId.Value, limit, DateTimeOffset.UtcNow));
+        RaiseEvent(new CategoryLimitSet(Id.Value, UserId.Value, categoryId.Value, limit, DateTimeOffset.UtcNow));
     }
 
     public void RemoveCategoryLimit(CategoryId categoryId)
@@ -65,14 +67,14 @@ public sealed class Budget : AggregateRoot
         if (_categoryBudgets.All(cb => cb.CategoryId != categoryId.Value))
             throw new DomainException($"Category '{categoryId.Value}' does not have a budget.");
 
-        RaiseEvent(new CategoryLimitRemoved(Id, UserId.Value, categoryId.Value, DateTimeOffset.UtcNow));
+        RaiseEvent(new CategoryLimitRemoved(Id.Value, UserId.Value, categoryId.Value, DateTimeOffset.UtcNow));
     }
 
     #region Apply
 
     public void Apply(BudgetCreated e)
     {
-        Id = e.BudgetId;
+        Id = new BudgetId(e.BudgetId);
         UserId = new UserId(e.UserId);
         Period = new BudgetPeriod(e.Month, e.Year);
         TotalLimit = e.TotalLimit;
@@ -82,7 +84,7 @@ public sealed class Budget : AggregateRoot
 
     public void Apply(BudgetCopiedFromPrevious e)
     {
-        Id = e.BudgetId;
+        Id = new BudgetId(e.BudgetId);
         UserId = new UserId(e.UserId);
         Period = new BudgetPeriod(e.Month, e.Year);
         TotalLimit = e.TotalLimit;

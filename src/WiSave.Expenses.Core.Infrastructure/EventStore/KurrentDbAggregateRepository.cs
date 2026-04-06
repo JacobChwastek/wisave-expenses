@@ -6,10 +6,10 @@ using WiSave.Expenses.Core.Domain.SharedKernel;
 
 namespace WiSave.Expenses.Core.Infrastructure.EventStore;
 
-public sealed class KurrentDbAggregateRepository<T>(
+public sealed class KurrentDbAggregateRepository<T, TId>(
     EventStoreClient client,
-    ContractEventTypeRegistry eventTypeRegistry) : IAggregateRepository<T>
-    where T : AggregateRoot, new()
+    ContractEventTypeRegistry eventTypeRegistry) : IAggregateRepository<T, TId>
+    where T : AggregateRoot<TId>, IAggregateStream<TId>, new()
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -17,8 +17,9 @@ public sealed class KurrentDbAggregateRepository<T>(
         WriteIndented = false,
     };
 
-    public async Task<T?> LoadAsync(string streamId, CancellationToken ct = default)
+    public async Task<T?> LoadAsync(TId id, CancellationToken ct = default)
     {
+        var streamId = T.ToStreamId(id);
         var aggregate = new T();
         var events = new List<object>();
 
@@ -54,7 +55,7 @@ public sealed class KurrentDbAggregateRepository<T>(
         var uncommitted = aggregate.GetUncommittedEvents();
         if (uncommitted.Count == 0) return;
 
-        var streamId = $"{typeof(T).Name.ToLowerInvariant()}-{aggregate.Id}";
+        var streamId = T.ToStreamId(aggregate.Id);
         var expectedRevision = aggregate.Version < 0
             ? StreamRevision.None
             : StreamRevision.FromInt64(aggregate.Version);

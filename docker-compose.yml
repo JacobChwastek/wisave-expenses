@@ -4,10 +4,14 @@ services:
       context: .
       dockerfile: Dockerfile.WebApi
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
+    networks:
+      - default
+      - wisave-net
     environment:
       - ConnectionStrings__Postgres=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
-      - RabbitMq__Host=host.docker.internal
+      - RabbitMq__Host=rabbitmq
       - RabbitMq__VirtualHost=expenses
 
   worker-domain:
@@ -15,28 +19,37 @@ services:
       context: .
       dockerfile: Dockerfile.Worker.Domain
     depends_on:
-      - kurrentdb
-      - postgres
+      kurrentdb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
     environment:
       - ConnectionStrings__Postgres=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
       - ConnectionStrings__EventStore=esdb://kurrentdb:2113?tls=false
-      - RabbitMq__Host=host.docker.internal
+      - RabbitMq__Host=rabbitmq
       - RabbitMq__VirtualHost=expenses
       - KurrentForwarder__GroupName=expenses-forwarder
       - KurrentForwarder__FromStartWhenCreated=true
       - KurrentForwarder__MaxSubscriberCount=1
       - KurrentForwarder__ConsumerStrategyName=DispatchToSingle
+    networks:
+      - default
+      - wisave-net
 
   worker-projections:
     build:
       context: .
       dockerfile: Dockerfile.Worker.Projections
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       - ConnectionStrings__Postgres=Host=postgres;Database=wisave_expenses;Username=wisave;Password=wisave_dev
-      - RabbitMq__Host=host.docker.internal
+      - RabbitMq__Host=rabbitmq
       - RabbitMq__VirtualHost=expenses
+    networks:
+      - default
+      - wisave-net
 
   kurrentdb:
     image: eventstore/eventstore:24.10
@@ -48,6 +61,11 @@ services:
       - EVENTSTORE_MEM_DB=false
     volumes:
       - kurrentdb-data:/var/lib/eventstore
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:2113/health/live || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:17
@@ -71,5 +89,6 @@ volumes:
 
 networks:
   default:
+  wisave-net:
     external: true
     name: wisave-net
