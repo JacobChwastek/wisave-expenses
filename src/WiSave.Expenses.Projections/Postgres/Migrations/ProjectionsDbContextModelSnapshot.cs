@@ -2,21 +2,18 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using WiSave.Expenses.Projections;
 
 #nullable disable
 
-namespace WiSave.Expenses.Projections.Migrations
+namespace WiSave.Expenses.Projections.Postgres.Migrations
 {
     [DbContext(typeof(ProjectionsDbContext))]
-    [Migration("20260406173620_Initial")]
-    partial class Initial
+    partial class ProjectionsDbContextModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -106,6 +103,9 @@ namespace WiSave.Expenses.Projections.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BudgetId");
+
+                    b.HasIndex("BudgetId", "CategoryId")
+                        .IsUnique();
 
                     b.ToTable("budget_category_limits", "projections");
                 });
@@ -240,7 +240,24 @@ namespace WiSave.Expenses.Projections.Migrations
 
                     b.HasIndex("UserId", "Year");
 
+                    b.HasIndex("UserId", "Year", "Month")
+                        .IsUnique();
+
                     b.ToTable("monthly_stats", "projections");
+                });
+
+            modelBuilder.Entity("WiSave.Expenses.Projections.ReadModels.ProcessedMessageReadModel", b =>
+                {
+                    b.Property<Guid>("MessageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("ProcessedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("MessageId");
+
+                    b.ToTable("processed_messages", "projections");
                 });
 
             modelBuilder.Entity("WiSave.Expenses.Projections.ReadModels.ProjectionCheckpoint", b =>
@@ -291,6 +308,9 @@ namespace WiSave.Expenses.Projections.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("UserId", "Month", "Year");
+
+                    b.HasIndex("UserId", "Month", "Year", "CategoryId")
+                        .IsUnique();
 
                     b.ToTable("spending_summaries", "projections");
                 });

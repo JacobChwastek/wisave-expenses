@@ -12,6 +12,7 @@ public sealed class ProjectionsDbContext(DbContextOptions<ProjectionsDbContext> 
     public DbSet<SpendingSummaryReadModel> SpendingSummaries => Set<SpendingSummaryReadModel>();
     public DbSet<MonthlyStatsReadModel> MonthlyStats => Set<MonthlyStatsReadModel>();
     public DbSet<ProjectionCheckpoint> Checkpoints => Set<ProjectionCheckpoint>();
+    public DbSet<ProcessedMessageReadModel> ProcessedMessages => Set<ProcessedMessageReadModel>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -46,6 +47,7 @@ public sealed class ProjectionsDbContext(DbContextOptions<ProjectionsDbContext> 
             e.ToTable("budget_category_limits");
             e.HasKey(x => x.Id);
             e.HasIndex(x => x.BudgetId);
+            e.HasIndex(x => new { x.BudgetId, x.CategoryId }).IsUnique();
         });
 
         modelBuilder.Entity<SpendingSummaryReadModel>(e =>
@@ -53,6 +55,7 @@ public sealed class ProjectionsDbContext(DbContextOptions<ProjectionsDbContext> 
             e.ToTable("spending_summaries");
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.UserId, x.Month, x.Year });
+            e.HasIndex(x => new { x.UserId, x.Month, x.Year, x.CategoryId }).IsUnique();
         });
 
         modelBuilder.Entity<MonthlyStatsReadModel>(e =>
@@ -60,12 +63,19 @@ public sealed class ProjectionsDbContext(DbContextOptions<ProjectionsDbContext> 
             e.ToTable("monthly_stats");
             e.HasKey(x => x.Id);
             e.HasIndex(x => new { x.UserId, x.Year });
+            e.HasIndex(x => new { x.UserId, x.Year, x.Month }).IsUnique();
         });
 
         modelBuilder.Entity<ProjectionCheckpoint>(e =>
         {
             e.ToTable("checkpoints");
             e.HasKey(x => x.Id);
+        });
+
+        modelBuilder.Entity<ProcessedMessageReadModel>(e =>
+        {
+            e.ToTable("processed_messages");
+            e.HasKey(x => x.MessageId);
         });
     }
 }

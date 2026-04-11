@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace WiSave.Expenses.Projections.Migrations
+namespace WiSave.Expenses.Projections.Postgres.Migrations
 {
     /// <inheritdoc />
     public partial class Initial : Migration
@@ -135,6 +135,19 @@ namespace WiSave.Expenses.Projections.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "processed_messages",
+                schema: "projections",
+                columns: table => new
+                {
+                    MessageId = table.Column<Guid>(type: "uuid", nullable: false),
+                    ProcessedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_processed_messages", x => x.MessageId);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "spending_summaries",
                 schema: "projections",
                 columns: table => new
@@ -164,6 +177,13 @@ namespace WiSave.Expenses.Projections.Migrations
                 schema: "projections",
                 table: "budget_category_limits",
                 column: "BudgetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_budget_category_limits_BudgetId_CategoryId",
+                schema: "projections",
+                table: "budget_category_limits",
+                columns: new[] { "BudgetId", "CategoryId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_budgets_UserId_Month_Year",
@@ -203,10 +223,24 @@ namespace WiSave.Expenses.Projections.Migrations
                 columns: new[] { "UserId", "Year" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_monthly_stats_UserId_Year_Month",
+                schema: "projections",
+                table: "monthly_stats",
+                columns: new[] { "UserId", "Year", "Month" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_spending_summaries_UserId_Month_Year",
                 schema: "projections",
                 table: "spending_summaries",
                 columns: new[] { "UserId", "Month", "Year" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_spending_summaries_UserId_Month_Year_CategoryId",
+                schema: "projections",
+                table: "spending_summaries",
+                columns: new[] { "UserId", "Month", "Year", "CategoryId" },
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -234,6 +268,10 @@ namespace WiSave.Expenses.Projections.Migrations
 
             migrationBuilder.DropTable(
                 name: "monthly_stats",
+                schema: "projections");
+
+            migrationBuilder.DropTable(
+                name: "processed_messages",
                 schema: "projections");
 
             migrationBuilder.DropTable(
