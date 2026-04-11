@@ -21,6 +21,7 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IScopedDatabaseMigrator, CoreDatabaseMigrator>();
         services.AddSingleton<IScopedDatabaseMigrator, ProjectionsDatabaseMigrator>();
         services.AddSingleton<IDatabaseMigrationOperations, DatabaseMigrationOperations>();
+        services.AddSingleton<IEventStoreResetOperations, EventStoreResetOperations>();
 
         RegisterCommands(services, typeof(ServiceCollectionExtensions).Assembly);
 
