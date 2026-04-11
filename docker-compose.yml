@@ -3,8 +3,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.WebApi
-    ports:
-      - "5200:8080"
     depends_on:
       - postgres
     environment:
