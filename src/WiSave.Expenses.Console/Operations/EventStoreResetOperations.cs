@@ -1,5 +1,5 @@
-using EventStore.Client;
 using System.Text;
+using EventStore.Client;
 using WiSave.Expenses.Console.Shell;
 
 namespace WiSave.Expenses.Console.Operations;
@@ -106,7 +106,7 @@ internal sealed class EventStoreResetOperations : IEventStoreResetOperations
 
             await foreach (var resolvedEvent in allEvents.WithCancellation(ct))
             {
-                var streamName = resolvedEvent.OriginalEvent.EventStreamId;
+                var streamName = resolvedEvent.OriginalStreamId;
                 if (!streamName.StartsWith('$'))
                 {
                     streamNames.Add(streamName);
