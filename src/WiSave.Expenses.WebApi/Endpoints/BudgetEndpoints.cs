@@ -1,8 +1,8 @@
 using MassTransit;
 using WiSave.Expenses.Contracts.Commands.Budgets;
-using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Infrastructure.Identity;
 using WiSave.Expenses.Projections.Repositories;
+using WiSave.Expenses.WebApi.Authorization;
 using WiSave.Expenses.WebApi.Requests.Budgets;
 
 namespace WiSave.Expenses.WebApi.Endpoints;
@@ -13,14 +13,14 @@ public static class BudgetEndpoints
     {
         var group = app.MapGroup("/expenses/budgets").WithTags("Budgets");
 
-        group.MapPost("/", Create);
-        group.MapPost("/copy", Copy);
-        group.MapPut("/{id}/limit", SetLimit);
-        group.MapPut("/{id}/categories/{categoryId}", SetCategoryLimit);
-        group.MapDelete("/{id}/categories/{categoryId}", RemoveCategoryLimit);
-        group.MapGet("/", GetByMonth);
-        group.MapGet("/summary", GetSummary);
-        group.MapGet("/monthly-stats", GetMonthlyStats);
+        group.MapPost("/", Create).RequirePermission(Permissions.Expenses.Write);
+        group.MapPost("/copy", Copy).RequirePermission(Permissions.Expenses.Write);
+        group.MapPut("/{id}/limit", SetLimit).RequirePermission(Permissions.Expenses.Write);
+        group.MapPut("/{id}/categories/{categoryId}", SetCategoryLimit).RequirePermission(Permissions.Expenses.Write);
+        group.MapDelete("/{id}/categories/{categoryId}", RemoveCategoryLimit).RequirePermission(Permissions.Expenses.Delete);
+        group.MapGet("/", GetByMonth).RequirePermission(Permissions.Expenses.Read);
+        group.MapGet("/summary", GetSummary).RequirePermission(Permissions.Expenses.Read);
+        group.MapGet("/monthly-stats", GetMonthlyStats).RequirePermission(Permissions.Expenses.Read);
     }
 
     private static async Task<IResult> Create(

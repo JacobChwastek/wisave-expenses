@@ -2,6 +2,7 @@ using MassTransit;
 using WiSave.Expenses.Contracts.Commands.Accounts;
 using WiSave.Expenses.Core.Infrastructure.Identity;
 using WiSave.Expenses.Projections.Repositories;
+using WiSave.Expenses.WebApi.Authorization;
 using WiSave.Expenses.WebApi.Requests.Accounts;
 
 namespace WiSave.Expenses.WebApi.Endpoints;
@@ -12,11 +13,11 @@ public static class AccountEndpoints
     {
         var group = app.MapGroup("/expenses/accounts").WithTags("Accounts");
 
-        group.MapPost("/", Open);
-        group.MapPut("/{id}", Update);
-        group.MapDelete("/{id}", Close);
-        group.MapGet("/", GetAll);
-        group.MapGet("/{id}", GetById);
+        group.MapPost("/", Open).RequirePermission(Permissions.Expenses.Write);
+        group.MapPut("/{id}", Update).RequirePermission(Permissions.Expenses.Write);
+        group.MapDelete("/{id}", Close).RequirePermission(Permissions.Expenses.Delete);
+        group.MapGet("/", GetAll).RequirePermission(Permissions.Expenses.Read);
+        group.MapGet("/{id}", GetById).RequirePermission(Permissions.Expenses.Read);
     }
 
     private static async Task<IResult> Open(IPublishEndpoint bus, ICurrentUser user, OpenAccountRequest request)

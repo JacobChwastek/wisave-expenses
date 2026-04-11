@@ -4,7 +4,9 @@ using WiSave.Expenses.Core.Infrastructure.Messaging;
 using WiSave.Expenses.Core.Infrastructure.Postgres;
 using WiSave.Expenses.Projections;
 using WiSave.Expenses.Projections.Repositories;
+using WiSave.Expenses.WebApi.Authorization;
 using WiSave.Expenses.WebApi.Endpoints;
+using WiSave.Expenses.WebApi.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,12 +21,14 @@ builder.Services.AddDbContext<ProjectionsDbContext>(opts => opts.UseNpgsql(postg
 // Identity
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUser, HeaderCurrentUser>();
+builder.Services.AddScoped<PermissionContext>();
 
 // Read repositories
 builder.Services.AddScoped<AccountReadRepository>();
 builder.Services.AddScoped<ExpenseReadRepository>();
 builder.Services.AddScoped<BudgetReadRepository>();
 
+builder.Services.AddExpensesJson();
 builder.Services.AddMessaging(builder.Configuration);
 
 var app = builder.Build();

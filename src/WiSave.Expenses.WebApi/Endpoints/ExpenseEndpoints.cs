@@ -1,9 +1,9 @@
 using MassTransit;
 using WiSave.Expenses.Contracts.Commands.Expenses;
-using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Infrastructure.Identity;
 using WiSave.Expenses.Projections.Queries;
 using WiSave.Expenses.Projections.Repositories;
+using WiSave.Expenses.WebApi.Authorization;
 using WiSave.Expenses.WebApi.Requests.Expenses;
 
 namespace WiSave.Expenses.WebApi.Endpoints;
@@ -14,11 +14,11 @@ public static class ExpenseEndpoints
     {
         var group = app.MapGroup("/expenses").WithTags("Expenses");
 
-        group.MapPost("/", Record);
-        group.MapPut("/{id}", Update);
-        group.MapDelete("/{id}", Delete);
-        group.MapGet("/", GetPaged);
-        group.MapGet("/{id}", GetById);
+        group.MapPost("/", Record).RequirePermission(Permissions.Expenses.Write);
+        group.MapPut("/{id}", Update).RequirePermission(Permissions.Expenses.Write);
+        group.MapDelete("/{id}", Delete).RequirePermission(Permissions.Expenses.Delete);
+        group.MapGet("/", GetPaged).RequirePermission(Permissions.Expenses.Read);
+        group.MapGet("/{id}", GetById).RequirePermission(Permissions.Expenses.Read);
     }
 
     private static async Task<IResult> Record(

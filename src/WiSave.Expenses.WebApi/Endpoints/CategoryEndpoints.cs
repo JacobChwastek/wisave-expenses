@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using WiSave.Expenses.Core.Infrastructure.Identity;
 using WiSave.Expenses.Core.Infrastructure.Postgres;
 using WiSave.Expenses.Core.Infrastructure.Postgres.Entities;
+using WiSave.Expenses.WebApi.Authorization;
 using WiSave.Expenses.WebApi.Requests.Categories;
 
 namespace WiSave.Expenses.WebApi.Endpoints;
@@ -12,12 +13,12 @@ public static class CategoryEndpoints
     {
         var group = app.MapGroup("/expenses/categories").WithTags("Categories");
 
-        group.MapGet("/", GetAll);
-        group.MapPost("/", Create);
-        group.MapPut("/{id}", Update);
-        group.MapDelete("/{id}", Delete);
-        group.MapPost("/{id}/subcategories", CreateSubcategory);
-        group.MapDelete("/{id}/subcategories/{subId}", DeleteSubcategory);
+        group.MapGet("/", GetAll).RequirePermission(Permissions.Expenses.Read);
+        group.MapPost("/", Create).RequirePermission(Permissions.Expenses.Write);
+        group.MapPut("/{id}", Update).RequirePermission(Permissions.Expenses.Write);
+        group.MapDelete("/{id}", Delete).RequirePermission(Permissions.Expenses.Delete);
+        group.MapPost("/{id}/subcategories", CreateSubcategory).RequirePermission(Permissions.Expenses.Write);
+        group.MapDelete("/{id}/subcategories/{subId}", DeleteSubcategory).RequirePermission(Permissions.Expenses.Delete);
     }
 
     private static async Task<IResult> GetAll(
