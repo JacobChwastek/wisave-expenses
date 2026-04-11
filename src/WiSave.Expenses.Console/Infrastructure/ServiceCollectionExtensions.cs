@@ -18,6 +18,8 @@ internal static class ServiceCollectionExtensions
         services.AddSingleton<IConsoleShell, ConsoleShell>();
         services.AddSingleton<IConsoleApplication, ConsoleApplication>();
 
+        services.AddSingleton<IScopedDatabaseMigrator, CoreDatabaseMigrator>();
+        services.AddSingleton<IScopedDatabaseMigrator, ProjectionsDatabaseMigrator>();
         services.AddSingleton<IDatabaseMigrationOperations, DatabaseMigrationOperations>();
 
         RegisterCommands(services, typeof(ServiceCollectionExtensions).Assembly);

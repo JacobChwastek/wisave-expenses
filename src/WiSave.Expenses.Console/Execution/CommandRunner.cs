@@ -68,7 +68,7 @@ internal sealed class CommandRunner(
 
         try
         {
-            var result = await command.ExecuteAsync(new CommandExecutionContext(arguments), ct);
+            var result = await command.ExecuteAsync(new CommandExecutionContext(arguments, allowPrompting), ct);
             PrintResult(result);
             return result.Success ? 0 : 1;
         }

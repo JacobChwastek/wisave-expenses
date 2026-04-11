@@ -65,6 +65,18 @@ dotnet run --project src/WiSave.Expenses.Worker.Projections
 - Use the appropriate migrations projects for schema changes.
 - Keep runtime persistence changes aligned with migration scripts and tests.
 - Mention migration or replay requirements in handoff notes.
+- Treat EF Core migrations as the source of truth for schema changes.
+- Keep DbUp responsible for per-schema bootstrap only: creating the target schema if needed and maintaining a schema-scoped `SchemaVersions` journal.
+- Recommended schema-change flow:
+  1. Apply code/model changes in EF Core.
+  2. Generate the EF Core migration.
+  3. Generate SQL from that EF migration.
+  4. Copy the generated SQL into the next DbUp script in the matching migrations project.
+- Do not have the agent invent, regenerate, or hand-author DbUp payload SQL on its own.
+- The EF-migration-to-DbUp-script step is a manual developer workflow and should be called out to the developer instead of being improvised automatically in-session.
+- Do not hand-rewrite existing EF-derived DbUp migration payloads unless a change is explicitly requested.
+- Avoid shipping placeholder or comment-only DbUp scripts. DbUp will still journal an executed script by filename, so if a no-op script has already been applied, any later real change must go into a new numbered script instead of reusing that filename.
+- For local console verification, the expenses Postgres runs on host port `5433` via `docker compose`.
 
 ## Agent Handoff
 
