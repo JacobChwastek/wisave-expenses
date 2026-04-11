@@ -27,3 +27,11 @@ appsettings.Local.json
 ## OS
 .DS_Store
 Thumbs.db
+
+## Graphify
+graphify-out/
+.graphify_*
+.graphify-cache/
+
+## Claude
+.claude/settings.json

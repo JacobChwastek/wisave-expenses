@@ -1,0 +1,85 @@
+# AGENTS.md
+
+Guidance for coding agents working in this repository.
+
+## Project Overview
+
+- `WiSave.Expenses` is an event-sourced expenses microservice using DDD and CQRS.
+- Domain events are stored in KurrentDB, and read models are projected into PostgreSQL.
+- MassTransit is used for command and integration message flow with other services.
+- Keep changes focused, preserve existing architecture boundaries, and avoid broad refactors.
+
+## Repository Layout
+
+- `src/WiSave.Expenses.WebApi` — REST endpoints and authorization checks
+- `src/WiSave.Expenses.Worker.Domain` — command consumers and domain execution pipeline
+- `src/WiSave.Expenses.Worker.Projections` — projection workers and subscription runtime
+- `src/WiSave.Expenses.Core.Domain` — aggregates, domain events, value objects
+- `src/WiSave.Expenses.Core.Application` — command handlers, application workflows, abstractions
+- `src/WiSave.Expenses.Core.Infrastructure` — KurrentDB, Postgres, messaging, identity integration
+- `src/WiSave.Expenses.Projections` — read models, projectors, repositories, query handlers
+- `src/WiSave.Expenses.Contracts` — shared contracts and event/message models
+- `src/WiSave.Expenses.Console` — local operational/administrative console commands
+- `src/WiSave.Expenses.Core.Migrations` — core schema migration support
+- `src/WiSave.Expenses.Projections.Migrations` — projection schema migration support
+- `tests/*` — unit and integration tests split by project responsibility
+
+## Working Style
+
+- Prefer minimal changes that solve the root cause.
+- Follow existing naming, layering, and dependency direction.
+- Do not mix unrelated cleanup into feature or bugfix work.
+- Keep contracts backwards compatible unless a breaking change is explicitly requested.
+- When behavior changes, update tests in the nearest relevant test project.
+
+## Build, Run, and Test
+
+Use the existing solution commands:
+
+```bash
+dotnet build WiSave.Expenses.slnx
+dotnet test WiSave.Expenses.slnx
+docker compose up --build
+dotnet run --project src/WiSave.Expenses.WebApi
+dotnet run --project src/WiSave.Expenses.Worker.Domain
+dotnet run --project src/WiSave.Expenses.Worker.Projections
+```
+
+## Testing Expectations
+
+- Run targeted tests first for changed areas, then broader validation.
+- Do not claim completion without running relevant verification commands.
+- If verification cannot be run, state that clearly and list what should be executed.
+- Favor tests that validate event flow correctness and projection outcomes.
+
+## Expenses-Specific Guidance
+
+- Preserve event-sourcing invariants: domain state must be derived from events.
+- Keep command handling deterministic and idempotent where retries are possible.
+- Ensure projections tolerate eventual consistency and replay behavior.
+- Keep API and contracts aligned with current Portal integration assumptions.
+- Changes to event contracts require careful compatibility consideration for existing consumers.
+
+## Migrations and Data Changes
+
+- Use the appropriate migrations projects for schema changes.
+- Keep runtime persistence changes aligned with migration scripts and tests.
+- Mention migration or replay requirements in handoff notes.
+
+## Agent Handoff
+
+When finishing work:
+
+- summarize what changed and why
+- list files touched
+- note verification performed
+- call out follow-up steps, risks, and required run commands
+
+## graphify
+
+This project has a graphify knowledge graph at graphify-out/.
+
+Rules:
+- Before answering architecture or codebase questions, read graphify-out/GRAPH_REPORT.md for god nodes and community structure
+- If graphify-out/wiki/index.md exists, navigate it instead of reading raw files
+- After modifying code files in this session, run `python3 -c "from graphify.watch import _rebuild_code; from pathlib import Path; _rebuild_code(Path('.'))"` to keep the graph current
