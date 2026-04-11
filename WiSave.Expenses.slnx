@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/Solution Items/">
+    <File Path="AGENTS.md" />
+    <File Path="CLAUDE.md" />
     <File Path="docker-compose.yml" />
   </Folder>
   <Folder Name="/src/">
@@ -25,5 +27,6 @@
     <Project Path="tests/WiSave.Expenses.Core.Domain.Tests/WiSave.Expenses.Core.Domain.Tests.csproj" />
     <Project Path="tests/WiSave.Expenses.Projections.Tests/WiSave.Expenses.Projections.Tests.csproj" />
     <Project Path="tests/WiSave.Expenses.WebApi.Tests/WiSave.Expenses.WebApi.Tests.csproj" />
+    <Project Path="tests/WiSave.Expenses.Worker.Domain.Tests/WiSave.Expenses.Worker.Domain.Tests.csproj" />
   </Folder>
 </Solution>

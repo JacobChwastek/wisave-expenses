@@ -13,7 +13,9 @@ public static class EventStoreExtensions
         string connectionString)
     {
         var settings = EventStoreClientSettings.Create(connectionString);
+        services.AddSingleton<ContractEventTypeRegistry>();
         services.AddSingleton(new EventStoreClient(settings));
+        services.AddSingleton(new EventStorePersistentSubscriptionsClient(settings));
         services.AddScoped<IAggregateRepository<Account>, KurrentDbAggregateRepository<Account>>();
         services.AddScoped<IAggregateRepository<Expense>, KurrentDbAggregateRepository<Expense>>();
         services.AddScoped<IAggregateRepository<Budget>, KurrentDbAggregateRepository<Budget>>();
