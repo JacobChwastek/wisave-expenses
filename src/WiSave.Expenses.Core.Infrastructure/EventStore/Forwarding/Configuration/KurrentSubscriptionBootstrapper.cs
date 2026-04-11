@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
+using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.PersistentSubscriptions;
 
-namespace WiSave.Expenses.Worker.Domain.Forwarding;
+namespace WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Configuration;
 
 public sealed class KurrentSubscriptionBootstrapper(
     IKurrentPersistentSubscriptionClient client,
@@ -21,7 +23,7 @@ public sealed class KurrentSubscriptionBootstrapper(
         }
         catch (KurrentPersistentSubscriptionAlreadyExistsException)
         {
-            logger.LogInformation("Persistent subscription group {GroupName} already exists.", options.Value.GroupName);
+            logger.LogInformation("Persistent subscription group {GroupName} already exists", options.Value.GroupName);
         }
     }
 }

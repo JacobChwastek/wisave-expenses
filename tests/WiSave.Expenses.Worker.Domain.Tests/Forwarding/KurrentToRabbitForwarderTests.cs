@@ -1,16 +1,46 @@
 using System.Text.Json;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using WiSave.Expenses.Contracts.Events.Accounts;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Infrastructure.EventStore;
-using WiSave.Expenses.Worker.Domain.Forwarding;
+using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Configuration;
+using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Hosting;
+using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.PersistentSubscriptions;
 
 namespace WiSave.Expenses.Worker.Domain.Tests.Forwarding;
 
 public class KurrentToRabbitForwarderTests
 {
+    [Fact]
+    public void Hosted_forwarder_registration_validates_with_scoped_publish_endpoint()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddOptions<KurrentForwarderOptions>().Configure(options =>
+        {
+            options.GroupName = "expenses-forwarder";
+            options.StreamPrefixes = ["account-", "expense-", "budget-"];
+        });
+        services.AddSingleton<IKurrentPersistentSubscriptionClient, FakePersistentSubscriptionClient>();
+        services.AddSingleton<KurrentSubscriptionBootstrapper>();
+        services.AddSingleton<ContractEventTypeRegistry>();
+        services.AddScoped<IPublishEndpoint>(_ => new RecordingPublishEndpoint());
+        services.AddHostedService<KurrentToRabbitForwarder>();
+
+        using var provider = services.BuildServiceProvider(new ServiceProviderOptions
+        {
+            ValidateOnBuild = true,
+            ValidateScopes = true,
+        });
+
+        var hostedService = provider.GetService<IHostedService>();
+        Assert.NotNull(hostedService);
+    }
+
     [Fact]
     public async Task HandleEventAsync_publishes_known_contract_event_and_acks()
     {
@@ -28,7 +58,7 @@ public class KurrentToRabbitForwarderTests
                 new FakePersistentSubscriptionClient(),
                 options,
                 NullLogger<KurrentSubscriptionBootstrapper>.Instance),
-            publishEndpoint,
+            CreateScopeFactory(publishEndpoint),
             registry,
             options,
             NullLogger<KurrentToRabbitForwarder>.Instance);
@@ -82,7 +112,7 @@ public class KurrentToRabbitForwarderTests
                 new FakePersistentSubscriptionClient(),
                 options,
                 NullLogger<KurrentSubscriptionBootstrapper>.Instance),
-            publishEndpoint,
+            CreateScopeFactory(publishEndpoint),
             registry,
             options,
             NullLogger<KurrentToRabbitForwarder>.Instance);
@@ -122,7 +152,7 @@ public class KurrentToRabbitForwarderTests
                 new FakePersistentSubscriptionClient(),
                 options,
                 NullLogger<KurrentSubscriptionBootstrapper>.Instance),
-            publishEndpoint,
+            CreateScopeFactory(publishEndpoint),
             registry,
             options,
             NullLogger<KurrentToRabbitForwarder>.Instance);
@@ -160,7 +190,7 @@ public class KurrentToRabbitForwarderTests
                 new FakePersistentSubscriptionClient(),
                 options,
                 NullLogger<KurrentSubscriptionBootstrapper>.Instance),
-            publishEndpoint: new FailingPublishEndpoint(),
+            scopeFactory: CreateScopeFactory(new FailingPublishEndpoint()),
             registry,
             options,
             NullLogger<KurrentToRabbitForwarder>.Instance);
@@ -192,6 +222,14 @@ public class KurrentToRabbitForwarderTests
         Assert.False(handled);
         Assert.Equal(0, actions.AckCalls);
         Assert.Equal(1, actions.RetryCalls);
+    }
+
+    private static IServiceScopeFactory CreateScopeFactory(IPublishEndpoint publishEndpoint)
+    {
+        var services = new ServiceCollection();
+        services.AddScoped(_ => publishEndpoint);
+
+        return services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
     }
 }
 

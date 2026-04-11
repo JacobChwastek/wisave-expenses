@@ -2,48 +2,7 @@ using EventStore.Client;
 using Grpc.Core;
 using System.Threading.Channels;
 
-namespace WiSave.Expenses.Worker.Domain.Forwarding;
-
-public interface IKurrentPersistentSubscriptionClient
-{
-    Task CreateToAllAsync(string groupName, KurrentPersistentSubscriptionCreateOptions options, CancellationToken ct);
-    Task<IKurrentPersistentSubscription> SubscribeToAllAsync(string groupName, CancellationToken ct);
-}
-
-public sealed record KurrentPersistentSubscriptionCreateOptions(
-    bool FromStartWhenCreated,
-    int MaxSubscriberCount,
-    string ConsumerStrategyName);
-
-public interface IKurrentPersistentSubscription : IAsyncDisposable
-{
-    IAsyncEnumerable<KurrentPersistentSubscriptionMessage> Messages { get; }
-}
-
-public interface IKurrentSubscriptionActions
-{
-    Task AckAsync(CancellationToken ct);
-    Task RetryAsync(string reason, CancellationToken ct);
-    Task ParkAsync(string reason, CancellationToken ct);
-    Task SkipAsync(string reason, CancellationToken ct);
-}
-
-public sealed record KurrentCommittedEvent(
-    Guid EventId,
-    string EventType,
-    string StreamId,
-    byte[] Data,
-    IKurrentSubscriptionActions Actions);
-
-public abstract record KurrentPersistentSubscriptionMessage
-{
-    public sealed record Confirmation(string SubscriptionId) : KurrentPersistentSubscriptionMessage;
-
-    public sealed record Event(KurrentCommittedEvent CommittedEvent) : KurrentPersistentSubscriptionMessage;
-}
-
-public sealed class KurrentPersistentSubscriptionAlreadyExistsException(string groupName, Exception? innerException = null)
-    : Exception($"Persistent subscription group '{groupName}' already exists.", innerException);
+namespace WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.PersistentSubscriptions;
 
 public sealed class EventStorePersistentSubscriptionClientAdapter(
     EventStorePersistentSubscriptionsClient client) : IKurrentPersistentSubscriptionClient
@@ -86,7 +45,11 @@ public sealed class EventStorePersistentSubscriptionClientAdapter(
             },
             (sub, reason, ex) =>
             {
-                channel.Writer.TryComplete(ex ?? new InvalidOperationException($"Persistent subscription dropped: {reason}."));
+                channel.Writer.TryComplete(
+                    new KurrentPersistentSubscriptionDroppedException(
+                        groupName,
+                        reason.ToString(),
+                        ex));
             },
             cancellationToken: ct);
 

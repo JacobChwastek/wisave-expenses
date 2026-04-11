@@ -1,14 +1,18 @@
 using System.Text.Json;
 using MassTransit;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using WiSave.Expenses.Core.Infrastructure.EventStore;
+using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Configuration;
+using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.PersistentSubscriptions;
 
-namespace WiSave.Expenses.Worker.Domain.Forwarding;
+namespace WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Hosting;
 
 public sealed class KurrentToRabbitForwarder(
     IKurrentPersistentSubscriptionClient client,
     KurrentSubscriptionBootstrapper bootstrapper,
-    IPublishEndpoint publishEndpoint,
+    IServiceScopeFactory scopeFactory,
     ContractEventTypeRegistry eventTypeRegistry,
     IOptions<KurrentForwarderOptions> options,
     ILogger<KurrentToRabbitForwarder> logger) : BackgroundService
@@ -22,9 +26,49 @@ public sealed class KurrentToRabbitForwarder(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         await bootstrapper.EnsureCreatedAsync(stoppingToken);
+
+        var delay = TimeSpan.FromSeconds(Math.Max(1, options.Value.ReconnectDelaySeconds));
+        var maxDelay = TimeSpan.FromSeconds(Math.Max(options.Value.ReconnectDelaySeconds, options.Value.MaxReconnectDelaySeconds));
+
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            try
+            {
+                await RunSubscriptionLoopAsync(stoppingToken);
+                delay = TimeSpan.FromSeconds(Math.Max(1, options.Value.ReconnectDelaySeconds));
+            }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                break;
+            }
+            catch (KurrentPersistentSubscriptionDroppedException ex) when (!stoppingToken.IsCancellationRequested)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Kurrent persistent subscription {GroupName} dropped with reason {DropReason}. Reconnecting in {ReconnectDelaySeconds}s",
+                    ex.GroupName,
+                    ex.Reason,
+                    delay.TotalSeconds);
+            }
+            catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+            {
+                logger.LogError(
+                    ex,
+                    "Kurrent forwarder for group {GroupName} failed. Reconnecting in {ReconnectDelaySeconds}s",
+                    options.Value.GroupName,
+                    delay.TotalSeconds);
+            }
+
+            await Task.Delay(delay, stoppingToken);
+            delay = TimeSpan.FromSeconds(Math.Min(delay.TotalSeconds * 2, maxDelay.TotalSeconds));
+        }
+    }
+
+    private async Task RunSubscriptionLoopAsync(CancellationToken stoppingToken)
+    {
         await using var subscription = await client.SubscribeToAllAsync(options.Value.GroupName, stoppingToken);
 
-        await foreach (var message in subscription.Messages)
+        await foreach (var message in subscription.Messages.WithCancellation(stoppingToken))
         {
             switch (message)
             {
@@ -65,6 +109,9 @@ public sealed class KurrentToRabbitForwarder(
                 await committedEvent.Actions.ParkAsync($"Payload for {committedEvent.EventType} deserialized to null.", ct);
                 return false;
             }
+
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var publishEndpoint = scope.ServiceProvider.GetRequiredService<IPublishEndpoint>();
 
             await publishEndpoint.Publish(message, publishContext =>
             {
