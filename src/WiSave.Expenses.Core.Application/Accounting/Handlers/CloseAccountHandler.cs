@@ -16,20 +16,19 @@ public sealed class CloseAccountHandler(IAggregateRepository<Account> repository
         try
         {
             var account = await repository.LoadAsync($"account-{command.AccountId}", context.CancellationToken);
-            if (account is null)
+
+            var guard = CommandGuard.Ok
+                .Require(() => account is not null, "Account not found.")
+                .Require(() => account!.UserId == new UserId(command.UserId), "Access denied.");
+
+            if (guard.HasFailed(out var reason))
             {
                 await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(CloseAccount), "Account not found.", DateTimeOffset.UtcNow));
-                return;
-            }
-            if (account.UserId != new UserId(command.UserId))
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(CloseAccount), "Access denied.", DateTimeOffset.UtcNow));
+                    command.CorrelationId, command.UserId, nameof(CloseAccount), reason, DateTimeOffset.UtcNow));
                 return;
             }
 
-            account.Close();
+            account!.Close();
             await repository.SaveAsync(account, context.CancellationToken);
         }
         catch (DomainException ex)

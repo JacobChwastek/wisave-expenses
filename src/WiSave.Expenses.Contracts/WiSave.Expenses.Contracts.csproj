@@ -10,4 +10,8 @@
     <IsPackable>true</IsPackable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MassTransit.Abstractions" Version="8.5.8" />
+  </ItemGroup>
+
 </Project>

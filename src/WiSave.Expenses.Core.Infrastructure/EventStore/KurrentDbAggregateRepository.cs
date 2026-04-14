@@ -6,7 +6,9 @@ using WiSave.Expenses.Core.Domain.SharedKernel;
 
 namespace WiSave.Expenses.Core.Infrastructure.EventStore;
 
-public sealed class KurrentDbAggregateRepository<T>(EventStoreClient client) : IAggregateRepository<T>
+public sealed class KurrentDbAggregateRepository<T>(
+    EventStoreClient client,
+    ContractEventTypeRegistry eventTypeRegistry) : IAggregateRepository<T>
     where T : AggregateRoot, new()
 {
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -14,8 +16,6 @@ public sealed class KurrentDbAggregateRepository<T>(EventStoreClient client) : I
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         WriteIndented = false,
     };
-
-    private static readonly Dictionary<string, Type> EventTypeMap = BuildEventTypeMap();
 
     public async Task<T?> LoadAsync(string streamId, CancellationToken ct = default)
     {
@@ -28,7 +28,7 @@ public sealed class KurrentDbAggregateRepository<T>(EventStoreClient client) : I
 
             await foreach (var resolved in result)
             {
-                var eventType = ResolveEventType(resolved.Event.EventType);
+                var eventType = eventTypeRegistry.Resolve(resolved.Event.EventType);
                 if (eventType is null) continue;
 
                 var data = Encoding.UTF8.GetString(resolved.Event.Data.Span);
@@ -76,31 +76,5 @@ public sealed class KurrentDbAggregateRepository<T>(EventStoreClient client) : I
         }
 
         aggregate.ClearUncommittedEvents();
-    }
-
-    private static Type? ResolveEventType(string eventTypeName)
-    {
-        return EventTypeMap.GetValueOrDefault(eventTypeName);
-    }
-
-    private static Dictionary<string, Type> BuildEventTypeMap()
-    {
-        var map = new Dictionary<string, Type>();
-        var contractsAssembly = typeof(Contracts.Events.CommandFailed).Assembly;
-
-        foreach (var type in contractsAssembly.GetExportedTypes())
-        {
-            if (type.IsClass && type.IsSealed && type.IsAssignableTo(typeof(System.Runtime.CompilerServices.ITuple)))
-                continue;
-
-            if (type.IsClass || (type.IsValueType && !type.IsEnum))
-            {
-                // Only include record types from Events namespaces
-                if (type.Namespace?.Contains("Events") == true)
-                    map[type.Name] = type;
-            }
-        }
-
-        return map;
     }
 }

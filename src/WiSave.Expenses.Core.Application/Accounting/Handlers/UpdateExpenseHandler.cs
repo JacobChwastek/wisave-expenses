@@ -16,20 +16,19 @@ public sealed class UpdateExpenseHandler(IAggregateRepository<Expense> repositor
         try
         {
             var expense = await repository.LoadAsync($"expense-{command.ExpenseId}", context.CancellationToken);
-            if (expense is null)
+
+            var guard = CommandGuard.Ok
+                .Require(() => expense is not null, "Expense not found.")
+                .Require(() => expense!.UserId == new UserId(command.UserId), "Access denied.");
+
+            if (guard.HasFailed(out var reason))
             {
                 await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(UpdateExpense), "Expense not found.", DateTimeOffset.UtcNow));
-                return;
-            }
-            if (expense.UserId != new UserId(command.UserId))
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(UpdateExpense), "Access denied.", DateTimeOffset.UtcNow));
+                    command.CorrelationId, command.UserId, nameof(UpdateExpense), reason, DateTimeOffset.UtcNow));
                 return;
             }
 
-            expense.Update(
+            expense!.Update(
                 command.Amount,
                 command.Currency,
                 command.Date,

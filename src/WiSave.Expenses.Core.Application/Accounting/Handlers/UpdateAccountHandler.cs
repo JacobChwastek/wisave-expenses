@@ -16,20 +16,19 @@ public sealed class UpdateAccountHandler(IAggregateRepository<Account> repositor
         try
         {
             var account = await repository.LoadAsync($"account-{command.AccountId}", context.CancellationToken);
-            if (account is null)
+
+            var guard = CommandGuard.Ok
+                .Require(() => account is not null, "Account not found.")
+                .Require(() => account!.UserId == new UserId(command.UserId), "Access denied.");
+
+            if (guard.HasFailed(out var reason))
             {
                 await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(UpdateAccount), "Account not found.", DateTimeOffset.UtcNow));
-                return;
-            }
-            if (account.UserId != new UserId(command.UserId))
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(UpdateAccount), "Access denied.", DateTimeOffset.UtcNow));
+                    command.CorrelationId, command.UserId, nameof(UpdateAccount), reason, DateTimeOffset.UtcNow));
                 return;
             }
 
-            account.Update(
+            account!.Update(
                 command.Name,
                 command.Type,
                 command.Currency,

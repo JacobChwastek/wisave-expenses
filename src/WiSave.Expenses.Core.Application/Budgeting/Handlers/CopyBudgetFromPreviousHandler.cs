@@ -20,16 +20,15 @@ public sealed class CopyBudgetFromPreviousHandler(IAggregateRepository<Budget> r
 
             var sourceStreamId = $"budget-{command.UserId}-{sourceYear}-{sourceMonth:D2}";
             var sourceBudget = await repository.LoadAsync(sourceStreamId, context.CancellationToken);
-            if (sourceBudget is null)
+
+            var guard = CommandGuard.Ok
+                .Require(() => sourceBudget is not null, "No previous month budget found to copy from.")
+                .Require(() => sourceBudget!.Recurring, "Previous month budget is not marked as recurring.");
+
+            if (guard.HasFailed(out var reason))
             {
                 await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(CopyBudgetFromPrevious), "No previous month budget found to copy from.", DateTimeOffset.UtcNow));
-                return;
-            }
-            if (!sourceBudget.Recurring)
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(CopyBudgetFromPrevious), "Previous month budget is not marked as recurring.", DateTimeOffset.UtcNow));
+                    command.CorrelationId, command.UserId, nameof(CopyBudgetFromPrevious), reason, DateTimeOffset.UtcNow));
                 return;
             }
 
@@ -37,7 +36,7 @@ public sealed class CopyBudgetFromPreviousHandler(IAggregateRepository<Budget> r
             var newBudget = Budget.CopyFromPrevious(
                 new BudgetId(budgetId), new UserId(command.UserId), command.Month, command.Year,
                 sourceMonth, sourceYear,
-                sourceBudget.Currency, sourceBudget.TotalLimit,
+                sourceBudget!.Currency, sourceBudget.TotalLimit,
                 sourceBudget.Recurring, sourceBudget.CategoryBudgets.ToDictionary(cb => cb.CategoryId, cb => cb.Limit));
 
             await repository.SaveAsync(newBudget, context.CancellationToken);

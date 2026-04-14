@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WiSave.Expenses.Projections.ReadModels;
 
-namespace WiSave.Expenses.Projections.Queries;
+namespace WiSave.Expenses.Projections.Repositories;
 
-public sealed class AccountQueries(ProjectionsDbContext db)
+public sealed class AccountReadRepository(ProjectionsDbContext db)
 {
     public async Task<List<AccountReadModel>> GetAllAsync(string userId, CancellationToken ct = default)
     {

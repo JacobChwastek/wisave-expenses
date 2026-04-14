@@ -1,34 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using WiSave.Expenses.Projections.Queries;
 using WiSave.Expenses.Projections.ReadModels;
 
-namespace WiSave.Expenses.Projections.Queries;
+namespace WiSave.Expenses.Projections.Repositories;
 
-public sealed record ExpenseQueryParams
-{
-    public string UserId { get; init; } = string.Empty;
-    public string? Cursor { get; init; }
-    public int PageSize { get; init; } = 20;
-    public string Direction { get; init; } = "next";
-    public DateOnly? From { get; init; }
-    public DateOnly? To { get; init; }
-    public string? Search { get; init; }
-    public List<string>? CategoryIds { get; init; }
-    public List<string>? AccountIds { get; init; }
-    public bool? Recurring { get; init; }
-    public string SortField { get; init; } = "date";
-    public string SortDirection { get; init; } = "desc";
-}
-
-public sealed record PagedResult<T>
-{
-    public List<T> Items { get; init; } = [];
-    public string? NextCursor { get; init; }
-    public string? PreviousCursor { get; init; }
-    public bool HasNextPage { get; init; }
-    public bool HasPreviousPage { get; init; }
-}
-
-public sealed class ExpenseQueries(ProjectionsDbContext db)
+public sealed class ExpenseReadRepository(ProjectionsDbContext db)
 {
     public async Task<PagedResult<ExpenseReadModel>> GetPagedAsync(ExpenseQueryParams p, CancellationToken ct = default)
     {

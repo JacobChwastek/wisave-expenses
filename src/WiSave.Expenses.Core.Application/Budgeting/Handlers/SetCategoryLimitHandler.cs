@@ -15,31 +15,25 @@ public sealed class SetCategoryLimitHandler(
     public async Task Consume(ConsumeContext<SetCategoryLimit> context)
     {
         var command = context.Message;
+        var ct = context.CancellationToken;
         try
         {
-            var budget = await repository.LoadAsync($"budget-{command.BudgetId}", context.CancellationToken);
-            if (budget is null)
+            var budget = await repository.LoadAsync($"budget-{command.BudgetId}", ct);
+
+            var guard = await CommandGuard.Ok
+                .Require(() => budget is not null, "Budget not found.")
+                .Require(() => budget!.UserId == new UserId(command.UserId), "Access denied.")
+                .RequireAsync(() => categoryRepository.ExistsAsync(command.CategoryId, command.UserId, ct), "Category not found.");
+
+            if (guard.HasFailed(out var reason))
             {
                 await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(SetCategoryLimit), "Budget not found.", DateTimeOffset.UtcNow));
-                return;
-            }
-            if (budget.UserId != new UserId(command.UserId))
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(SetCategoryLimit), "Access denied.", DateTimeOffset.UtcNow));
+                    command.CorrelationId, command.UserId, nameof(SetCategoryLimit), reason, DateTimeOffset.UtcNow));
                 return;
             }
 
-            if (!await categoryRepository.ExistsAsync(command.CategoryId, command.UserId, context.CancellationToken))
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(SetCategoryLimit), "Category not found.", DateTimeOffset.UtcNow));
-                return;
-            }
-
-            budget.SetCategoryLimit(new CategoryId(command.CategoryId), command.Limit);
-            await repository.SaveAsync(budget, context.CancellationToken);
+            budget!.SetCategoryLimit(new CategoryId(command.CategoryId), command.Limit);
+            await repository.SaveAsync(budget, ct);
         }
         catch (DomainException ex)
         {

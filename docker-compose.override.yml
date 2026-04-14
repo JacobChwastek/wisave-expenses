@@ -1,0 +1,7 @@
+# Dev override: re-exposes WebAPI on host for running portal outside Docker.
+# Usage: docker compose up (auto-merges override)
+# Production: docker compose -f docker-compose.yml up (skips override)
+services:
+  wisave-expenses-webapi:
+    ports:
+      - "5200:8080"

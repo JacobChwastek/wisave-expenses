@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using WiSave.Expenses.Projections.ReadModels;
 
-namespace WiSave.Expenses.Projections.Queries;
+namespace WiSave.Expenses.Projections.Repositories;
 
-public sealed class BudgetQueries(ProjectionsDbContext db)
+public sealed class BudgetReadRepository(ProjectionsDbContext db)
 {
     public async Task<BudgetReadModel?> GetByMonthAsync(string userId, int month, int year, CancellationToken ct = default)
     {

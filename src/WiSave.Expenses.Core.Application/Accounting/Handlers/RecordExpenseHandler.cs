@@ -16,34 +16,26 @@ public sealed class RecordExpenseHandler(
     public async Task Consume(ConsumeContext<RecordExpense> context)
     {
         var command = context.Message;
+        var ct = context.CancellationToken;
         try
         {
-            var account = await accountRepository.LoadAsync($"account-{command.AccountId}", context.CancellationToken);
-            if (account is null || account.UserId != new UserId(command.UserId))
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(RecordExpense), "Account not found or access denied.", DateTimeOffset.UtcNow));
-                return;
-            }
-            if (!account.IsActive)
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(RecordExpense), "Cannot record expense on a closed account.", DateTimeOffset.UtcNow));
-                return;
-            }
+            var account = await accountRepository.LoadAsync($"account-{command.AccountId}", ct);
 
-            if (!await categoryRepository.ExistsAsync(command.CategoryId, command.UserId, context.CancellationToken))
-            {
-                await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(RecordExpense), "Category not found.", DateTimeOffset.UtcNow));
-                return;
-            }
+            var guard = await CommandGuard.Ok
+                .Require(() => account is not null, "Account not found or access denied.")
+                .Require(() => account!.UserId == new UserId(command.UserId), "Access denied.")
+                .Require(() => account!.IsActive, "Cannot record expense on a closed account.")
+                .RequireAsync(() => categoryRepository.ExistsAsync(command.CategoryId, command.UserId, ct), "Category not found.")
+                .RequireAsync(
+                    () => command.SubcategoryId is null
+                        ? Task.FromResult(true)
+                        : categoryRepository.SubcategoryExistsAsync(command.SubcategoryId, command.CategoryId, ct),
+                    "Subcategory not found.");
 
-            if (command.SubcategoryId is not null &&
-                !await categoryRepository.SubcategoryExistsAsync(command.SubcategoryId, command.CategoryId, context.CancellationToken))
+            if (guard.HasFailed(out var reason))
             {
                 await context.Publish(new CommandFailed(
-                    command.CorrelationId, command.UserId, nameof(RecordExpense), "Subcategory not found.", DateTimeOffset.UtcNow));
+                    command.CorrelationId, command.UserId, nameof(RecordExpense), reason, DateTimeOffset.UtcNow), ct);
                 return;
             }
 
@@ -54,12 +46,12 @@ public sealed class RecordExpenseHandler(
                 command.Date, command.Description, command.Recurring,
                 command.Metadata);
 
-            await expenseRepository.SaveAsync(expense, context.CancellationToken);
+            await expenseRepository.SaveAsync(expense, ct);
         }
         catch (DomainException ex)
         {
             await context.Publish(new CommandFailed(
-                command.CorrelationId, command.UserId, nameof(RecordExpense), ex.Message, DateTimeOffset.UtcNow));
+                command.CorrelationId, command.UserId, nameof(RecordExpense), ex.Message, DateTimeOffset.UtcNow), ct);
         }
     }
 }

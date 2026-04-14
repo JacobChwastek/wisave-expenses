@@ -10,6 +10,8 @@ public sealed class ExpensesDbContext(DbContextOptions<ExpensesDbContext> option
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.HasDefaultSchema("config");
+
         modelBuilder.Entity<CategoryEntity>(e =>
         {
             e.ToTable("categories");
