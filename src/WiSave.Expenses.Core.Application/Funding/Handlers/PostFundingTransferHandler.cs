@@ -33,9 +33,7 @@ public sealed class PostFundingTransferHandler(
             account!.PostTransfer(
                 new TransferId(command.TransferId),
                 command.Amount,
-                command.PostedAtUtc,
-                command.TargetCreditCardAccountId is null ? null : new CreditCardAccountId(command.TargetCreditCardAccountId),
-                command.StatementId is null ? null : new CreditCardStatementId(command.StatementId));
+                command.PostedAtUtc);
 
             await repository.SaveAsync(account, ct);
         }

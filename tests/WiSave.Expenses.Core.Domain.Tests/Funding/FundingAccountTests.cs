@@ -137,15 +137,11 @@ public class FundingAccountTests
         account.PostTransfer(
             new TransferId("transfer-1"),
             25m,
-            postedAt,
-            new CreditCardAccountId("card-1"),
-            new CreditCardStatementId("stmt-1"));
+            postedAt);
 
         Assert.Equal(75m, account.Balance);
         var @event = Assert.IsType<FundingTransferPosted>(Assert.Single(account.GetUncommittedEvents()));
         Assert.Equal("transfer-1", @event.TransferId);
-        Assert.Equal("card-1", @event.TargetCreditCardAccountId);
-        Assert.Equal("stmt-1", @event.StatementId);
         Assert.Equal(25m, @event.Amount);
         Assert.Equal(postedAt, @event.PostedAtUtc);
     }
@@ -264,9 +260,7 @@ public class FundingAccountTests
         var ex = Assert.Throws<DomainException>(() => account.PostTransfer(
             new TransferId("transfer-1"),
             0m,
-            DateTimeOffset.UtcNow,
-            null,
-            null));
+            DateTimeOffset.UtcNow));
 
         Assert.Equal("Funding transfer amount must be greater than zero.", ex.Message);
     }
@@ -279,9 +273,7 @@ public class FundingAccountTests
         var ex = Assert.Throws<DomainException>(() => account.PostTransfer(
             new TransferId("transfer-1"),
             100.01m,
-            DateTimeOffset.UtcNow,
-            null,
-            null));
+            DateTimeOffset.UtcNow));
 
         Assert.Equal("Funding transfer amount cannot exceed account balance.", ex.Message);
     }

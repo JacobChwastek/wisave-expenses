@@ -5,7 +5,5 @@ public sealed record PostFundingTransfer(
     string UserId,
     string FundingAccountId,
     string TransferId,
-    string? TargetCreditCardAccountId,
-    string? StatementId,
     decimal Amount,
     DateTimeOffset PostedAtUtc);

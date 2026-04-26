@@ -77,8 +77,6 @@ public class FundingAccountRequestMappingTests
     public void Post_transfer_request_maps_to_command()
     {
         var request = new PostFundingTransferRequest(
-            TargetCreditCardAccountId: "card-1",
-            StatementId: "stmt-1",
             Amount: 25m,
             PostedAtUtc: DateTimeOffset.Parse("2026-05-16T10:00:00Z"));
 
@@ -92,8 +90,6 @@ public class FundingAccountRequestMappingTests
         Assert.Equal("user-1", command.UserId);
         Assert.Equal("fund-1", command.FundingAccountId);
         Assert.Equal("transfer-1", command.TransferId);
-        Assert.Equal("card-1", command.TargetCreditCardAccountId);
-        Assert.Equal("stmt-1", command.StatementId);
         Assert.Equal(25m, command.Amount);
         Assert.Equal(DateTimeOffset.Parse("2026-05-16T10:00:00Z"), command.PostedAtUtc);
     }

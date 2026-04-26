@@ -9,6 +9,6 @@ public class KurrentForwarderOptionsTests
     {
         var sut = new KurrentForwarderOptions();
 
-        Assert.Equal(["funding-account-", "credit-card-account-", "budget-"], sut.StreamPrefixes);
+        Assert.Equal(["funding-account-"], sut.StreamPrefixes);
     }
 }

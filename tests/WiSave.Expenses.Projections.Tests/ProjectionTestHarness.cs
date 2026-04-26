@@ -32,8 +32,6 @@ internal sealed class ProjectionTestHarness : IAsyncDisposable
         services.AddScoped(typeof(IdempotentProjectionFilter<>));
         services.AddMassTransitTestHarness(cfg =>
         {
-            cfg.AddConsumer<BudgetEventHandler>();
-            cfg.AddConsumer<CreditCardAccountEventHandler>();
             cfg.AddConsumer<ExpenseEventHandler>();
             cfg.AddConsumer<FundingAccountEventHandler>();
             cfg.UsingInMemory((context, bus) =>

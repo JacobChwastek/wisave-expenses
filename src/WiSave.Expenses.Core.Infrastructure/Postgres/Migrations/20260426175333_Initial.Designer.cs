@@ -11,7 +11,7 @@ using WiSave.Expenses.Core.Infrastructure.Postgres;
 namespace WiSave.Expenses.Core.Infrastructure.Postgres.Migrations
 {
     [DbContext(typeof(ExpensesDbContext))]
-    [Migration("20260423222821_Initial")]
+    [Migration("20260426175333_Initial")]
     partial class Initial
     {
         /// <inheritdoc />

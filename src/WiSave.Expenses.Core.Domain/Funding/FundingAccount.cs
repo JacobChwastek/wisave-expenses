@@ -136,9 +136,7 @@ public sealed class FundingAccount : AggregateRoot<FundingAccountId>, IAggregate
     public void PostTransfer(
         TransferId transferId,
         decimal amount,
-        DateTimeOffset postedAtUtc,
-        CreditCardAccountId? targetCreditCardAccountId,
-        CreditCardStatementId? statementId)
+        DateTimeOffset postedAtUtc)
     {
         EnsureActive();
 
@@ -152,8 +150,6 @@ public sealed class FundingAccount : AggregateRoot<FundingAccountId>, IAggregate
             Id.Value,
             UserId.Value,
             transferId.Value,
-            targetCreditCardAccountId?.Value,
-            statementId?.Value,
             amount,
             postedAtUtc,
             DateTimeOffset.UtcNow));

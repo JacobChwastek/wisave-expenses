@@ -99,8 +99,6 @@ public class FundingAccountEventHandlerTests
             FundingAccountId: "fund-1",
             UserId: "user-1",
             TransferId: "transfer-1",
-            TargetCreditCardAccountId: "card-1",
-            StatementId: "stmt-1",
             Amount: 700m,
             PostedAtUtc: postedAt,
             Timestamp: postedAt));

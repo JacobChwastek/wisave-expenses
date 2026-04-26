@@ -3,8 +3,6 @@ using WiSave.Expenses.Contracts.Commands.FundingAccounts;
 namespace WiSave.Expenses.WebApi.Requests.FundingAccounts;
 
 public sealed record PostFundingTransferRequest(
-    string? TargetCreditCardAccountId,
-    string? StatementId,
     decimal Amount,
     DateTimeOffset? PostedAtUtc = null);
 
@@ -21,8 +19,6 @@ public static class PostFundingTransferRequestExtensions
             userId,
             fundingAccountId,
             transferId,
-            request.TargetCreditCardAccountId,
-            request.StatementId,
             request.Amount,
             request.PostedAtUtc ?? DateTimeOffset.UtcNow);
 }

@@ -16,42 +16,6 @@ namespace WiSave.Expenses.Projections.Postgres.Migrations
                 name: "projections");
 
             migrationBuilder.CreateTable(
-                name: "budget_category_limits",
-                schema: "projections",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    BudgetId = table.Column<string>(type: "text", nullable: false),
-                    CategoryId = table.Column<string>(type: "text", nullable: false),
-                    Limit = table.Column<decimal>(type: "numeric", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_budget_category_limits", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "budgets",
-                schema: "projections",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    Month = table.Column<int>(type: "integer", nullable: false),
-                    Year = table.Column<int>(type: "integer", nullable: false),
-                    TotalLimit = table.Column<decimal>(type: "numeric", nullable: false),
-                    Currency = table.Column<string>(type: "text", nullable: false),
-                    Recurring = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_budgets", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "checkpoints",
                 schema: "projections",
                 columns: table => new
@@ -63,62 +27,6 @@ namespace WiSave.Expenses.Projections.Postgres.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_checkpoints", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "credit_card_accounts",
-                schema: "projections",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    UserId = table.Column<string>(type: "text", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Currency = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
-                    SettlementAccountId = table.Column<string>(type: "text", nullable: false),
-                    BankProvider = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    ProductCode = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    CreditLimit = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    StatementClosingDay = table.Column<int>(type: "integer", nullable: false),
-                    GracePeriodDays = table.Column<int>(type: "integer", nullable: false),
-                    UnbilledBalance = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    ActiveStatementBalance = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
-                    ActiveStatementOutstandingBalance = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
-                    ActiveStatementMinimumPaymentDue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: true),
-                    ActiveStatementDueDate = table.Column<DateOnly>(type: "date", nullable: true),
-                    ActiveStatementPeriodCloseDate = table.Column<DateOnly>(type: "date", nullable: true),
-                    Color = table.Column<string>(type: "text", nullable: true),
-                    LastFourDigits = table.Column<string>(type: "text", nullable: true),
-                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_credit_card_accounts", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "credit_card_statements",
-                schema: "projections",
-                columns: table => new
-                {
-                    Id = table.Column<string>(type: "text", nullable: false),
-                    CreditCardAccountId = table.Column<string>(type: "text", nullable: false),
-                    PeriodFrom = table.Column<DateOnly>(type: "date", nullable: false),
-                    PeriodTo = table.Column<DateOnly>(type: "date", nullable: false),
-                    StatementDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    DueDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    StatementBalance = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    OutstandingBalance = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    MinimumPaymentDue = table.Column<decimal>(type: "numeric(18,2)", precision: 18, scale: 2, nullable: false),
-                    PolicyCode = table.Column<string>(type: "character varying(64)", maxLength: 64, nullable: false),
-                    PolicyVersion = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_credit_card_statements", x => new { x.CreditCardAccountId, x.Id });
                 });
 
             migrationBuilder.CreateTable(
@@ -165,6 +73,28 @@ namespace WiSave.Expenses.Projections.Postgres.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_funding_accounts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "funding_payment_instruments",
+                schema: "projections",
+                columns: table => new
+                {
+                    Id = table.Column<string>(type: "text", nullable: false),
+                    FundingAccountId = table.Column<string>(type: "text", nullable: false),
+                    UserId = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Kind = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
+                    LastFourDigits = table.Column<string>(type: "character varying(4)", maxLength: 4, nullable: true),
+                    Network = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: true),
+                    Color = table.Column<string>(type: "text", nullable: true),
+                    IsActive = table.Column<bool>(type: "boolean", nullable: false),
+                    CreatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+                    UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_funding_payment_instruments", x => new { x.FundingAccountId, x.Id });
                 });
 
             migrationBuilder.CreateTable(
@@ -218,44 +148,6 @@ namespace WiSave.Expenses.Projections.Postgres.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_budget_category_limits_BudgetId",
-                schema: "projections",
-                table: "budget_category_limits",
-                column: "BudgetId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_budget_category_limits_BudgetId_CategoryId",
-                schema: "projections",
-                table: "budget_category_limits",
-                columns: new[] { "BudgetId", "CategoryId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_budgets_UserId_Month_Year",
-                schema: "projections",
-                table: "budgets",
-                columns: new[] { "UserId", "Month", "Year" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_credit_card_accounts_SettlementAccountId",
-                schema: "projections",
-                table: "credit_card_accounts",
-                column: "SettlementAccountId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_credit_card_accounts_UserId",
-                schema: "projections",
-                table: "credit_card_accounts",
-                column: "UserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_credit_card_statements_CreditCardAccountId",
-                schema: "projections",
-                table: "credit_card_statements",
-                column: "CreditCardAccountId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_expenses_AccountId",
                 schema: "projections",
                 table: "expenses",
@@ -283,6 +175,18 @@ namespace WiSave.Expenses.Projections.Postgres.Migrations
                 name: "IX_funding_accounts_UserId",
                 schema: "projections",
                 table: "funding_accounts",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_funding_payment_instruments_FundingAccountId",
+                schema: "projections",
+                table: "funding_payment_instruments",
+                column: "FundingAccountId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_funding_payment_instruments_UserId",
+                schema: "projections",
+                table: "funding_payment_instruments",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -316,23 +220,7 @@ namespace WiSave.Expenses.Projections.Postgres.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "budget_category_limits",
-                schema: "projections");
-
-            migrationBuilder.DropTable(
-                name: "budgets",
-                schema: "projections");
-
-            migrationBuilder.DropTable(
                 name: "checkpoints",
-                schema: "projections");
-
-            migrationBuilder.DropTable(
-                name: "credit_card_accounts",
-                schema: "projections");
-
-            migrationBuilder.DropTable(
-                name: "credit_card_statements",
                 schema: "projections");
 
             migrationBuilder.DropTable(
@@ -341,6 +229,10 @@ namespace WiSave.Expenses.Projections.Postgres.Migrations
 
             migrationBuilder.DropTable(
                 name: "funding_accounts",
+                schema: "projections");
+
+            migrationBuilder.DropTable(
+                name: "funding_payment_instruments",
                 schema: "projections");
 
             migrationBuilder.DropTable(

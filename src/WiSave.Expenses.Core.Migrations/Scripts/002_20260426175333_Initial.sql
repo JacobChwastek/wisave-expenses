@@ -8,7 +8,7 @@ START TRANSACTION;
 
 DO $EF$
 BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260423222821_Initial') THEN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260426175333_Initial') THEN
         IF NOT EXISTS(SELECT 1 FROM pg_namespace WHERE nspname = 'config') THEN
 CREATE SCHEMA config;
 END IF;
@@ -17,7 +17,7 @@ END $EF$;
 
 DO $EF$
 BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260423222821_Initial') THEN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260426175333_Initial') THEN
 CREATE TABLE config.categories (
                                    "Id" character varying(64) NOT NULL,
                                    "UserId" character varying(64) NOT NULL,
@@ -30,7 +30,7 @@ END $EF$;
 
 DO $EF$
 BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260423222821_Initial') THEN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260426175333_Initial') THEN
 CREATE TABLE config.subcategories (
                                       "Id" character varying(64) NOT NULL,
                                       "CategoryId" character varying(64) NOT NULL,
@@ -43,23 +43,23 @@ END $EF$;
 
 DO $EF$
 BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260423222821_Initial') THEN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260426175333_Initial') THEN
 CREATE INDEX "IX_categories_UserId" ON config.categories ("UserId");
 END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260423222821_Initial') THEN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260426175333_Initial') THEN
 CREATE INDEX "IX_subcategories_CategoryId" ON config.subcategories ("CategoryId");
 END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
-    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260423222821_Initial') THEN
+    IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260426175333_Initial') THEN
     INSERT INTO "__EFMigrationsHistory" ("MigrationId", "ProductVersion")
-    VALUES ('20260423222821_Initial', '10.0.7');
+    VALUES ('20260426175333_Initial', '10.0.7');
 END IF;
 END $EF$;
 COMMIT;

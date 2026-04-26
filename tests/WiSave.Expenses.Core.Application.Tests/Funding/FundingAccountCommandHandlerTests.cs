@@ -187,8 +187,6 @@ public class FundingAccountCommandHandlerTests
                 UserId: "user-1",
                 FundingAccountId: "funding-1",
                 TransferId: "transfer-1",
-                TargetCreditCardAccountId: "card-1",
-                StatementId: "stmt-1",
                 Amount: 35m,
                 PostedAtUtc: DateTimeOffset.Parse("2026-05-16T10:00:00Z")));
 

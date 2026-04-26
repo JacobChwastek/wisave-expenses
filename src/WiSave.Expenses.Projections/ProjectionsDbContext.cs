@@ -7,11 +7,7 @@ public sealed class ProjectionsDbContext(DbContextOptions<ProjectionsDbContext> 
 {
     public DbSet<FundingAccountReadModel> FundingAccounts => Set<FundingAccountReadModel>();
     public DbSet<FundingPaymentInstrumentReadModel> FundingPaymentInstruments => Set<FundingPaymentInstrumentReadModel>();
-    public DbSet<CreditCardAccountReadModel> CreditCardAccounts => Set<CreditCardAccountReadModel>();
-    public DbSet<CreditCardStatementReadModel> CreditCardStatements => Set<CreditCardStatementReadModel>();
     public DbSet<ExpenseReadModel> Expenses => Set<ExpenseReadModel>();
-    public DbSet<BudgetReadModel> Budgets => Set<BudgetReadModel>();
-    public DbSet<BudgetCategoryLimitReadModel> BudgetCategoryLimits => Set<BudgetCategoryLimitReadModel>();
     public DbSet<SpendingSummaryReadModel> SpendingSummaries => Set<SpendingSummaryReadModel>();
     public DbSet<MonthlyStatsReadModel> MonthlyStats => Set<MonthlyStatsReadModel>();
     public DbSet<ProjectionCheckpoint> Checkpoints => Set<ProjectionCheckpoint>();
@@ -42,34 +38,6 @@ public sealed class ProjectionsDbContext(DbContextOptions<ProjectionsDbContext> 
             e.Property(x => x.Network).HasMaxLength(32);
         });
 
-        modelBuilder.Entity<CreditCardAccountReadModel>(e =>
-        {
-            e.ToTable("credit_card_accounts");
-            e.HasKey(x => x.Id);
-            e.HasIndex(x => x.UserId);
-            e.HasIndex(x => x.SettlementAccountId);
-            e.Property(x => x.Currency).HasMaxLength(16);
-            e.Property(x => x.BankProvider).HasMaxLength(32);
-            e.Property(x => x.ProductCode).HasMaxLength(64);
-            e.Property(x => x.CreditLimit).HasPrecision(18, 2);
-            e.Property(x => x.UnbilledBalance).HasPrecision(18, 2);
-            e.Property(x => x.ActiveStatementBalance).HasPrecision(18, 2);
-            e.Property(x => x.ActiveStatementOutstandingBalance).HasPrecision(18, 2);
-            e.Property(x => x.ActiveStatementMinimumPaymentDue).HasPrecision(18, 2);
-        });
-
-        modelBuilder.Entity<CreditCardStatementReadModel>(e =>
-        {
-            e.ToTable("credit_card_statements");
-            e.HasKey(x => new { x.CreditCardAccountId, x.Id });
-            e.HasIndex(x => x.CreditCardAccountId);
-            e.Property(x => x.StatementBalance).HasPrecision(18, 2);
-            e.Property(x => x.OutstandingBalance).HasPrecision(18, 2);
-            e.Property(x => x.MinimumPaymentDue).HasPrecision(18, 2);
-            e.Property(x => x.PolicyCode).HasMaxLength(64);
-            e.Property(x => x.PolicyVersion).HasMaxLength(32);
-        });
-
         modelBuilder.Entity<ExpenseReadModel>(e =>
         {
             e.ToTable("expenses");
@@ -78,21 +46,6 @@ public sealed class ProjectionsDbContext(DbContextOptions<ProjectionsDbContext> 
             e.HasIndex(x => x.AccountId);
             e.HasIndex(x => x.CategoryId);
             e.HasIndex(x => x.Date);
-        });
-
-        modelBuilder.Entity<BudgetReadModel>(e =>
-        {
-            e.ToTable("budgets");
-            e.HasKey(x => x.Id);
-            e.HasIndex(x => new { x.UserId, x.Month, x.Year }).IsUnique();
-        });
-
-        modelBuilder.Entity<BudgetCategoryLimitReadModel>(e =>
-        {
-            e.ToTable("budget_category_limits");
-            e.HasKey(x => x.Id);
-            e.HasIndex(x => x.BudgetId);
-            e.HasIndex(x => new { x.BudgetId, x.CategoryId }).IsUnique();
         });
 
         modelBuilder.Entity<SpendingSummaryReadModel>(e =>

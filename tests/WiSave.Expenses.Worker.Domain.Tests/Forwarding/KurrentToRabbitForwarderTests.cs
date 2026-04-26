@@ -23,7 +23,7 @@ public class KurrentToRabbitForwarderTests
         services.AddOptions<KurrentForwarderOptions>().Configure(options =>
         {
             options.GroupName = "expenses-forwarder";
-            options.StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"];
+            options.StreamPrefixes = ["funding-account-"];
         });
         services.AddSingleton<IKurrentPersistentSubscriptionClient, FakePersistentSubscriptionClient>();
         services.AddSingleton<KurrentSubscriptionBootstrapper>();
@@ -49,7 +49,7 @@ public class KurrentToRabbitForwarderTests
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
-            StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"],
+            StreamPrefixes = ["funding-account-"],
         });
 
         var sut = new KurrentToRabbitForwarder(
@@ -99,7 +99,7 @@ public class KurrentToRabbitForwarderTests
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
-            StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"],
+            StreamPrefixes = ["funding-account-"],
         });
 
         var sut = new KurrentToRabbitForwarder(
@@ -139,7 +139,7 @@ public class KurrentToRabbitForwarderTests
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
-            StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"],
+            StreamPrefixes = ["funding-account-"],
         });
 
         var sut = new KurrentToRabbitForwarder(
@@ -177,7 +177,7 @@ public class KurrentToRabbitForwarderTests
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
-            StreamPrefixes = ["funding-account-", "credit-card-account-", "budget-"],
+            StreamPrefixes = ["funding-account-"],
         });
 
         var sut = new KurrentToRabbitForwarder(

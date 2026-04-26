@@ -18,18 +18,6 @@ public sealed record PaymentInstrumentId(string Value)
     public static explicit operator PaymentInstrumentId(string value) => new(value);
 }
 
-public sealed record CreditCardAccountId(string Value)
-{
-    public static explicit operator string(CreditCardAccountId id) => id.Value;
-    public static explicit operator CreditCardAccountId(string value) => new(value);
-}
-
-public sealed record CreditCardStatementId(string Value)
-{
-    public static explicit operator string(CreditCardStatementId id) => id.Value;
-    public static explicit operator CreditCardStatementId(string value) => new(value);
-}
-
 public sealed record TransferId(string Value)
 {
     public static explicit operator string(TransferId id) => id.Value;
@@ -40,12 +28,6 @@ public sealed record ExpenseId(string Value)
 {
     public static explicit operator string(ExpenseId id) => id.Value;
     public static explicit operator ExpenseId(string value) => new(value);
-}
-
-public sealed record BudgetId(string Value)
-{
-    public static explicit operator string(BudgetId id) => id.Value;
-    public static explicit operator BudgetId(string value) => new(value);
 }
 
 public sealed record CategoryId(string Value)
