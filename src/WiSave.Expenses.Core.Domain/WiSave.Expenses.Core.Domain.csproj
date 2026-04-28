@@ -4,6 +4,10 @@
     <ProjectReference Include="..\WiSave.Expenses.Contracts\WiSave.Expenses.Contracts.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="WiSave.Framework.Domain" Version="1.0.0" />
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>

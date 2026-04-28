@@ -1,4 +1,4 @@
-using WiSave.Expenses.Core.Domain.SharedKernel;
+using WiSave.Framework.Domain;
 
 namespace WiSave.Expenses.Core.Domain.SharedKernel.ValueObjects;
 

@@ -1,12 +1,11 @@
-using EventStore.Client;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Funding;
-using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Configuration;
-using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Hosting;
-using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.PersistentSubscriptions;
+using WiSave.Framework.Application;
+using WiSave.Framework.EventSourcing;
+using WiSave.Framework.EventSourcing.Kurrent;
 
 namespace WiSave.Expenses.Core.Infrastructure.EventStore;
 
@@ -16,10 +15,10 @@ public static class EventStoreExtensions
         this IServiceCollection services,
         string connectionString)
     {
-        var settings = EventStoreClientSettings.Create(connectionString);
-        services.AddSingleton<ContractEventTypeRegistry>();
-        services.AddSingleton(new EventStoreClient(settings));
-        services.AddSingleton(new EventStorePersistentSubscriptionsClient(settings));
+        WiSave.Framework.EventSourcing.Kurrent.Extensions.AddKurrentEventStore(services, connectionString);
+        services.AddSingleton<IEventTypeRegistry>(_ => AssemblyEventTypeRegistry.FromAssemblies(
+            [typeof(Contracts.Events.CommandFailed).Assembly],
+            type => type.Namespace?.Contains(".Events.", StringComparison.Ordinal) == true));
         services.AddScoped<IAggregateRepository<FundingAccount, FundingAccountId>, KurrentDbAggregateRepository<FundingAccount, FundingAccountId>>();
         services.AddScoped<IFundingAccountLookup, FundingAccountLookup>();
 
@@ -30,10 +29,7 @@ public static class EventStoreExtensions
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.Configure<KurrentForwarderOptions>(configuration.GetSection("KurrentForwarder"));
-        services.AddSingleton<IKurrentPersistentSubscriptionClient, EventStorePersistentSubscriptionClientAdapter>();
-        services.AddSingleton<KurrentSubscriptionBootstrapper>();
-        services.AddHostedService<KurrentToRabbitForwarder>();
+        WiSave.Framework.EventSourcing.Kurrent.Extensions.AddKurrentForwarding(services, configuration);
 
         return services;
     }

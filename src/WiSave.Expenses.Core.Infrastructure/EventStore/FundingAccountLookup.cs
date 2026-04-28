@@ -1,6 +1,7 @@
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Domain.Funding;
+using WiSave.Framework.Application;
 
 namespace WiSave.Expenses.Core.Infrastructure.EventStore;
 
