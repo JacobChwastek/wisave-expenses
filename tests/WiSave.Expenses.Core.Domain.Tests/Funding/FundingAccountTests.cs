@@ -1,7 +1,7 @@
 using WiSave.Expenses.Contracts.Events.FundingAccounts;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Domain.Funding;
-using WiSave.Expenses.Core.Domain.SharedKernel;
+using WiSave.Framework.Domain;
 
 namespace WiSave.Expenses.Core.Domain.Tests.Funding;
 

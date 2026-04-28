@@ -1,4 +1,5 @@
 using MassTransit;
+using WiSave.Framework.Application;
 using MassTransit.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using WiSave.Expenses.Contracts.Commands.FundingAccounts;

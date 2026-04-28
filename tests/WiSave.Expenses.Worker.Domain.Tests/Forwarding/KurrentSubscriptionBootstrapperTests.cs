@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
-using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Configuration;
-using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.PersistentSubscriptions;
+using WiSave.Framework.EventSourcing.Kurrent.Configuration;
+using WiSave.Framework.EventSourcing.Kurrent.PersistentSubscriptions;
 
 namespace WiSave.Expenses.Worker.Domain.Tests.Forwarding;
 

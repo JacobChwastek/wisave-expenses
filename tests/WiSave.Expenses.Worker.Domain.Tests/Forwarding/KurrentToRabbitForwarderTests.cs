@@ -6,14 +6,14 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using WiSave.Expenses.Contracts.Events.FundingAccounts;
 using WiSave.Expenses.Contracts.Models;
-using WiSave.Expenses.Core.Infrastructure.EventStore;
-using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Configuration;
-using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.Hosting;
-using WiSave.Expenses.Core.Infrastructure.EventStore.Forwarding.PersistentSubscriptions;
+using WiSave.Framework.EventSourcing;
+using WiSave.Framework.EventSourcing.Kurrent.Configuration;
+using WiSave.Framework.EventSourcing.Kurrent.Forwarding;
+using WiSave.Framework.EventSourcing.Kurrent.PersistentSubscriptions;
 
 namespace WiSave.Expenses.Worker.Domain.Tests.Forwarding;
 
-public class KurrentToRabbitForwarderTests
+public class KurrentToMassTransitForwarderTests
 {
     [Fact]
     public void Hosted_forwarder_registration_validates_with_scoped_publish_endpoint()
@@ -27,9 +27,9 @@ public class KurrentToRabbitForwarderTests
         });
         services.AddSingleton<IKurrentPersistentSubscriptionClient, FakePersistentSubscriptionClient>();
         services.AddSingleton<KurrentSubscriptionBootstrapper>();
-        services.AddSingleton<ContractEventTypeRegistry>();
+        services.AddSingleton<IEventTypeRegistry>(_ => CreateEventTypeRegistry());
         services.AddScoped<IPublishEndpoint>(_ => new RecordingPublishEndpoint());
-        services.AddHostedService<KurrentToRabbitForwarder>();
+        services.AddHostedService<KurrentToMassTransitForwarder>();
 
         using var provider = services.BuildServiceProvider(new ServiceProviderOptions
         {
@@ -45,14 +45,14 @@ public class KurrentToRabbitForwarderTests
     public async Task HandleEventAsync_publishes_known_contract_event_and_acks()
     {
         var publishEndpoint = new RecordingPublishEndpoint();
-        var registry = new ContractEventTypeRegistry();
+        var registry = CreateEventTypeRegistry();
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
             StreamPrefixes = ["funding-account-"],
         });
 
-        var sut = new KurrentToRabbitForwarder(
+        var sut = new KurrentToMassTransitForwarder(
             client: new FakePersistentSubscriptionClient(),
             bootstrapper: new KurrentSubscriptionBootstrapper(
                 new FakePersistentSubscriptionClient(),
@@ -61,7 +61,7 @@ public class KurrentToRabbitForwarderTests
             CreateScopeFactory(publishEndpoint),
             registry,
             options,
-            NullLogger<KurrentToRabbitForwarder>.Instance);
+            NullLogger<KurrentToMassTransitForwarder>.Instance);
 
         var actions = new FakeSubscriptionActions();
         var message = new FundingAccountOpened(
@@ -95,14 +95,14 @@ public class KurrentToRabbitForwarderTests
     public async Task HandleEventAsync_parks_unknown_event_on_expenses_stream()
     {
         var publishEndpoint = new RecordingPublishEndpoint();
-        var registry = new ContractEventTypeRegistry();
+        var registry = CreateEventTypeRegistry();
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
             StreamPrefixes = ["funding-account-"],
         });
 
-        var sut = new KurrentToRabbitForwarder(
+        var sut = new KurrentToMassTransitForwarder(
             client: new FakePersistentSubscriptionClient(),
             bootstrapper: new KurrentSubscriptionBootstrapper(
                 new FakePersistentSubscriptionClient(),
@@ -111,7 +111,7 @@ public class KurrentToRabbitForwarderTests
             CreateScopeFactory(publishEndpoint),
             registry,
             options,
-            NullLogger<KurrentToRabbitForwarder>.Instance);
+            NullLogger<KurrentToMassTransitForwarder>.Instance);
 
         var actions = new FakeSubscriptionActions();
 
@@ -135,14 +135,14 @@ public class KurrentToRabbitForwarderTests
     public async Task HandleEventAsync_skips_event_from_out_of_scope_stream()
     {
         var publishEndpoint = new RecordingPublishEndpoint();
-        var registry = new ContractEventTypeRegistry();
+        var registry = CreateEventTypeRegistry();
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
             StreamPrefixes = ["funding-account-"],
         });
 
-        var sut = new KurrentToRabbitForwarder(
+        var sut = new KurrentToMassTransitForwarder(
             client: new FakePersistentSubscriptionClient(),
             bootstrapper: new KurrentSubscriptionBootstrapper(
                 new FakePersistentSubscriptionClient(),
@@ -151,7 +151,7 @@ public class KurrentToRabbitForwarderTests
             CreateScopeFactory(publishEndpoint),
             registry,
             options,
-            NullLogger<KurrentToRabbitForwarder>.Instance);
+            NullLogger<KurrentToMassTransitForwarder>.Instance);
 
         var actions = new FakeSubscriptionActions();
 
@@ -173,14 +173,14 @@ public class KurrentToRabbitForwarderTests
     [Fact]
     public async Task HandleEventAsync_nacks_retry_when_publish_fails()
     {
-        var registry = new ContractEventTypeRegistry();
+        var registry = CreateEventTypeRegistry();
         var options = Options.Create(new KurrentForwarderOptions
         {
             GroupName = "expenses-forwarder",
             StreamPrefixes = ["funding-account-"],
         });
 
-        var sut = new KurrentToRabbitForwarder(
+        var sut = new KurrentToMassTransitForwarder(
             client: new FakePersistentSubscriptionClient(),
             bootstrapper: new KurrentSubscriptionBootstrapper(
                 new FakePersistentSubscriptionClient(),
@@ -189,7 +189,7 @@ public class KurrentToRabbitForwarderTests
             scopeFactory: CreateScopeFactory(new FailingPublishEndpoint()),
             registry,
             options,
-            NullLogger<KurrentToRabbitForwarder>.Instance);
+            NullLogger<KurrentToMassTransitForwarder>.Instance);
 
         var actions = new FakeSubscriptionActions();
         var message = new FundingAccountOpened(
@@ -223,6 +223,11 @@ public class KurrentToRabbitForwarderTests
 
         return services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>();
     }
+
+    private static IEventTypeRegistry CreateEventTypeRegistry() =>
+        AssemblyEventTypeRegistry.FromAssemblies(
+            [typeof(FundingAccountOpened).Assembly],
+            type => type.Namespace?.Contains(".Events.", StringComparison.Ordinal) == true);
 }
 
 internal sealed class FakePersistentSubscriptionClient : IKurrentPersistentSubscriptionClient

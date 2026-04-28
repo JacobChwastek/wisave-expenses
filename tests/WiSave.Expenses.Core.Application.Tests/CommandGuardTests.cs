@@ -1,3 +1,5 @@
+using WiSave.Framework.Application;
+
 namespace WiSave.Expenses.Core.Application.Tests;
 
 public class CommandGuardTests

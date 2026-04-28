@@ -4,7 +4,8 @@ using WiSave.Expenses.Contracts.Events;
 using WiSave.Expenses.Contracts.Models;
 using WiSave.Expenses.Core.Application.Abstractions;
 using WiSave.Expenses.Core.Domain.Funding;
-using WiSave.Expenses.Core.Domain.SharedKernel;
+using WiSave.Framework.Application;
+using WiSave.Framework.Domain;
 
 namespace WiSave.Expenses.Core.Application.Funding.Handlers;
 
